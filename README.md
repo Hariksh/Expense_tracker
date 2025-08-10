@@ -1,7 +1,7 @@
 <h1 align="center">💸 Expense Tracker Mobile Application 💸</h1>
 
 <p align="center">
-  <b>Hariksh Mahendra Suryawanashi</b> &mdash; <i>[Your Roll Number]</i>
+  <b>Hariksh Mahendra Suryawanashi</b> &mdash; <i>2025-B-04012007A</i>
 </p>
 
 ---
