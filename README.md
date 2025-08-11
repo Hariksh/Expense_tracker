@@ -12,13 +12,13 @@ Many people struggle to keep track of their daily expenses, leading to poor fina
 
 ---
 
-##Proposed Solution
+Proposed Solution
 
 A mobile application that allows users to quickly add their expenses with details like **amount, category, date, and notes**. The app displays a list of all expenses, provides filtering options, and summarizes spending by category. Data is stored locally for offline use, ensuring easy and quick access.
 
 ---
 
-## Key Features
+Key Features
 
 -  **Add new expenses** with amount, category, date, and notes
 -  **View all expenses** in a sorted, scrollable list
@@ -29,7 +29,7 @@ A mobile application that allows users to quickly add their expenses with detail
 
 ---
 
-##  Target Users
+  Target Users
 
 Anyone who wants to manage personal finances effectively, including:
 
@@ -39,7 +39,7 @@ Anyone who wants to manage personal finances effectively, including:
 
 ---
 
-##  Technology Stack
+  Technology Stack
 
 | Layer         | Technology                                      |
 | ------------- | ----------------------------------------------- |
@@ -52,13 +52,13 @@ Anyone who wants to manage personal finances effectively, including:
 
 ---
 
-##  Expected Outcome
+  Expected Outcome
 
 A fully functional mobile app that helps users **track daily expenses, view categorized spending, and manage their budget easily** with a simple and intuitive interface.
 
 ---
 
-##  Timeline
+  Timeline
 
 | Week(s) | Tasks                                                           |
 | ------- | --------------------------------------------------------------- |
