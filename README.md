@@ -6,7 +6,7 @@
 
 ---
 
-## Problem Statement
+Problem Statement
 
 Many people struggle to keep track of their daily expenses, leading to poor financial management and budgeting. Manual tracking is cumbersome and often neglected. There is a need for a **simple and effective mobile app** to record, categorize, and review expenses easily.
 
