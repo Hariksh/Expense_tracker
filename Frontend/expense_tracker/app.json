@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Expense_tracker",
-    "slug": "Expense_tracker",
+    "name": "expense_tracker",
+    "slug": "expense_tracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
