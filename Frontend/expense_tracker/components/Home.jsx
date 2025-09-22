@@ -1,12 +1,14 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
-const HomePage = () => (
+const HomePage = ({ navigation }) => (
   <View style={styles.container}>
     <Text style={styles.title}>Welcome to Expense Tracker</Text>
-    <Text style={styles.subtitle}>
-      Track your expenses and manage your budget easily!
-    </Text>
+    <TouchableOpacity
+      style={styles.button}
+      onPress={() => navigation.navigate("Expense")}>
+      <Text style={styles.buttonText}>Add your expense</Text>
+    </TouchableOpacity>
   </View>
 );
 
@@ -21,12 +23,16 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     color: "#388e3c",
-    marginBottom: 12,
+    marginBottom: 24,
   },
-  subtitle: { 
-    fontSize: 16, 
-    color: "#555" 
-},
+  button: {
+    backgroundColor: "#388e3c",
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
 });
 
 export default HomePage;
