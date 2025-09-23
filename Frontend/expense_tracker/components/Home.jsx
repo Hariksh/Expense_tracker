@@ -32,7 +32,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 16,
   },
-  buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  buttonText: { 
+    color: "#fff", 
+    fontSize: 18, 
+    fontWeight: "bold" },
 });
 
 export default HomePage;
