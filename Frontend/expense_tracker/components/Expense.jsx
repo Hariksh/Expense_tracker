@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,17 +7,43 @@ import {
   FlatList,
   StyleSheet,
 } from "react-native";
+import axios from "axios";
+
+const API_URL = "http://localhost:3000"; // Change to your IP if using a real device
 
 export default function Expenses() {
   const [expense, setExpense] = useState("");
   const [amount, setAmount] = useState("");
   const [expenses, setExpenses] = useState([]);
 
-  const addExpense = () => {
+  const fetchExpenses = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/expenses`);
+      setExpenses(res.data);
+    } catch (err) {
+      console.log("Error fetching expenses:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
+
+  const addExpense = async () => {
     if (expense && amount) {
-      setExpenses([...expenses,{id: Date.now().toString(), name: expense, amount }]);
-      setExpense("");
-      setAmount("");
+      try {
+        await axios.post(`${API_URL}/expenses`, {
+          amount,
+          category: expense,
+          note: "",
+          date: new Date().toISOString().slice(0, 10),
+        });
+        setExpense("");
+        setAmount("");
+        fetchExpenses();
+      } catch (err) {
+        console.log("Error adding expense:", err);
+      }
     }
   };
 
@@ -45,10 +71,10 @@ export default function Expenses() {
 
       <FlatList
         data={expenses}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id?.toString()}
         renderItem={({ item }) => (
           <Text style={styles.expenseItem}>
-            {item.name} - {item.amount}
+            {item.category} - {item.amount}
           </Text>
         )}
         style={styles.list}

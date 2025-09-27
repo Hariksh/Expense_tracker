@@ -1,7 +1,7 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomePage from "./Home";
-import ExpensePage from "./Expense"; // your expense tracker page
+import ExpensePage from "./Expense"; 
 
 const Stack = createNativeStackNavigator();
 
