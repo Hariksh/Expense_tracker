@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import axios from "axios";
 
-const API_URL = "http://localhost:3000"; // Change to your IP if using a real device
+const API_URL = "http://localhost:3000";
 
 export default function Expenses() {
   const [expense, setExpense] = useState("");
