@@ -13,6 +13,15 @@ app.get("/expenses", (req, res) => {
   res.json(expenses)
 })
 
+app.put("/expenses/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const { amount, category, note, date } = req.body;
+  expenses = expenses.map((exp) =>
+    exp.id === id ? { ...exp, amount, category, note, date } : exp
+  );
+  res.json({ success: true });
+});
+
 app.post("/expenses", (req, res) => {
   const { amount, category, note, date } = req.body;
   const newExpense = {

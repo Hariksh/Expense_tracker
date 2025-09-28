@@ -15,13 +15,14 @@ export default function Expenses() {
   const [expense, setExpense] = useState("");
   const [amount, setAmount] = useState("");
   const [expenses, setExpenses] = useState([]);
+  const [editingId, setEditingId] = useState(null);
 
   const fetchExpenses = async () => {
     try {
       const res = await axios.get(`${API_URL}/expenses`);
       setExpenses(res.data);
     } catch (err) {
-      console.log("Error fetching expenses:", err);
+      console.log("Error fetching", err);
     }
   };
 
@@ -47,6 +48,36 @@ export default function Expenses() {
     }
   };
 
+  const deleteExpense = async (id) => {
+      await axios.delete(`${API_URL}/expenses/${id}`);
+      fetchExpenses();
+  };
+
+  const startEdit = (item) => {
+    setExpense(item.category);
+    setAmount(item.amount.toString());
+    setEditingId(item.id);
+  };
+
+  const updateExpense = async () => {
+    if (expense && amount && editingId) {
+      try {
+        await axios.put(`${API_URL}/expenses/${editingId}`, {
+          amount,
+          category: expense,
+          note: "",
+          date: new Date().toISOString().slice(0, 10),
+        });
+        setExpense("");
+        setAmount("");
+        setEditingId(null);
+        fetchExpenses();
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Expense Tracker</Text>
@@ -61,21 +92,34 @@ export default function Expenses() {
         style={styles.input}
         placeholder="Enter amount"
         value={amount}
-        onChangeText={setAmount}
+        onChangeText={(text) => setAmount(text.replace(/[^0-9]/g, ""))}
         keyboardType="numeric"
       />
 
-      <TouchableOpacity style={styles.button} onPress={addExpense}>
-        <Text style={styles.buttonText}>Add Expense</Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={editingId ? updateExpense : addExpense}
+      >
+        <Text style={styles.buttonText}>
+          {editingId ? "Update Expense" : "Add Expense"}
+        </Text>
       </TouchableOpacity>
 
       <FlatList
         data={expenses}
         keyExtractor={(item) => item.id?.toString()}
         renderItem={({ item }) => (
-          <Text style={styles.expenseItem}>
-            {item.category} - {item.amount}
-          </Text>
+          <View style={styles.expenseRow}>
+            <Text style={styles.expenseItem}>
+              {item.category} - {item.amount}
+            </Text>
+            <TouchableOpacity style={styles.editBtn} onPress={() => startEdit(item)}>
+            <Text style={{ color: "#fff" }}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.deleteBtn} onPress={() => deleteExpense(item.id)}>
+            <Text style={{ color: "#fff" }}>Delete</Text>
+            </TouchableOpacity>
+          </View>
         )}
         style={styles.list}
       />
@@ -123,10 +167,29 @@ const styles = StyleSheet.create({
   list: {
     width: "100%",
   },
-  expenseItem: {
-    fontSize: 16,
-    padding: 10,
+  expenseRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
+    paddingVertical: 6,
+  },
+  expenseItem: {
+    fontSize: 16,
+    flex: 1,
+  },
+  editBtn: {
+    backgroundColor: "lightblue",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  deleteBtn: {
+    backgroundColor: "#e53935",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
   },
 });
