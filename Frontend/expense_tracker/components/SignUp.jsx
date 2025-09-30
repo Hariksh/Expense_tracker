@@ -9,9 +9,10 @@ import {
   Platform,
 } from "react-native";
 
-const LoginPage = ({ onLogin, switchToSignUp }) => {
+const SignUpPage = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   return (
     <KeyboardAvoidingView
@@ -19,8 +20,8 @@ const LoginPage = ({ onLogin, switchToSignUp }) => {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={styles.header}>
-        <Text style={styles.welcomeText}>Welcome Back!</Text>
-        <Text style={styles.subtitle}>Login to your account</Text>
+        <Text style={styles.welcomeText}>Create Account</Text>
+        <Text style={styles.subtitle}>Sign up to get started</Text>
       </View>
 
       <View style={styles.form}>
@@ -41,22 +42,25 @@ const LoginPage = ({ onLogin, switchToSignUp }) => {
           secureTextEntry
           placeholderTextColor="#aaa"
         />
+        <TextInput
+          style={styles.input}
+          placeholder="Confirm Password"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          secureTextEntry
+          placeholderTextColor="#aaa"
+        />
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => onLogin(email, password)}
+          onPress={() => console.log("Sign Up", email, password)}
         >
-          <Text style={styles.buttonText}>Login</Text>
+          <Text style={styles.buttonText}>Sign Up</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity>
-          <Text style={styles.forgotText}>Forgot Password?</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={switchToSignUp}>
+        <TouchableOpacity onPress={() => navigation.navigate("Login")}>
           <Text style={styles.switchText}>
-            Don't have an account?{" "}
-            <Text style={styles.signupText}>Sign Up</Text>
+            Already have an account? <Text style={styles.loginText}>Login</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -103,14 +107,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
-  forgotText: {
-    color: "#2e7d32",
-    textAlign: "center",
-    marginTop: 8,
-    fontSize: 14,
-  },
   switchText: { color: "#555", textAlign: "center", marginTop: 16 },
-  signupText: { color: "#2e7d32", fontWeight: "bold" },
+  loginText: { color: "#2e7d32", fontWeight: "bold" },
 });
 
-export default LoginPage;
+export default SignUpPage;
