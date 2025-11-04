@@ -1,11 +1,25 @@
 {
   "dependencies": {
-    "@prisma/client": "^6.16.2",
+    "@prisma/client": "^6.18.0",
+    "bcryptjs": "^3.0.3",
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.2.1",
+    "express-validator": "^7.3.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
     "nodemon": "^3.1.10"
   },
   "devDependencies": {
-    "prisma": "^6.16.2"
+    "prisma": "^6.18.0"
+  },
+  "scripts": {
+    "migrate": "prisma migrate dev --schema prisma/schema.prisma",
+    "generate": "prisma generate",
+    "dev": "nodemon server.js",
+    "start": "node server.js"
   }
 }
