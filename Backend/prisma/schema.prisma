@@ -1,12 +1,9 @@
-// Minimal Expense Splitter Schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -16,7 +13,6 @@ model User {
   password  String
   createdAt DateTime @default(now())
 
-  // Direct relations
   expenses      Expense[]      @relation("UserExpenses")
   groupMembers  GroupMember[]
   ExpenseSplit  ExpenseSplit[]
@@ -29,7 +25,6 @@ model Group {
   createdBy Int
   createdAt DateTime @default(now())
 
-  // Relations
   createdByUser User          @relation("CreatedGroups", fields: [createdBy], references: [id])
   members       GroupMember[]
   expenses      Expense[]

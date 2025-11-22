@@ -25,7 +25,6 @@ router.post("/", auth, async (req, res) => {
   const created = await prisma.group.create({
     data: { name, createdBy: req.user.id },
   });
-  // Add creator as member
   await prisma.groupMember.create({
     data: { groupId: created.id, userId: req.user.id },
   });
@@ -34,7 +33,7 @@ router.post("/", auth, async (req, res) => {
 
 router.post("/:id/members", auth, async (req, res) => {
   const groupId = parseInt(req.params.id);
-  const { userIds } = req.body; // [1,2,3]
+  const { userIds } = req.body;
   const grp = await prisma.group.findUnique({ where: { id: groupId } });
   if (!grp) return res.status(404).json({ error: "Group not found" });
   if (grp.createdBy !== req.user.id)

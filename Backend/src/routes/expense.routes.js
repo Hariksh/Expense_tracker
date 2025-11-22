@@ -36,12 +36,11 @@ router.post(
 
     let splits = [];
     if (split_type === "equal") {
-      const people = split_with.length + 1; // including payer
+      const people = split_with.length + 1;
       const share = Number(amount) / people;
       const users = [paid_by, ...split_with];
       splits = users.map((uid) => ({ userId: uid, shareAmount: share }));
     } else {
-      // custom: expect split_with as [{ userId, shareAmount }, ...] excluding payer's portion optional
       splits = split_with.map((s) => ({
         userId: s.userId,
         shareAmount: Number(s.shareAmount),
@@ -52,7 +51,6 @@ router.post(
           .status(400)
           .json({ error: "Custom shares must sum to total amount" });
       }
-      // include payer if not included
       if (!splits.find((s) => s.userId === paid_by)) {
         splits.push({ userId: paid_by, shareAmount: 0 });
       }
