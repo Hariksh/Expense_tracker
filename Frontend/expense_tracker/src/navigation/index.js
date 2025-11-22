@@ -15,45 +15,6 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const styles = StyleSheet.create({
-  tabBar: {
-    height: 70,
-    paddingTop: 8,
-    paddingBottom: 8,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#e8e8e8',
-  },
-  tabBarLabel: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  tabBarIcon: {
-    marginBottom: 4,
-  },
-  addButton: {
-    position: 'absolute',
-    bottom: 25,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#2e7d32',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  addButtonText: {
-    color: 'white',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginTop: -2,
-  },
-});
-
 function MainTabs({ navigation }) {
   return (
     <Tab.Navigator
@@ -167,3 +128,42 @@ export default function RootNav() {
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    height: 70,
+    paddingTop: 8,
+    paddingBottom: 8,
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#e8e8e8",
+  },
+  tabBarLabel: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  tabBarIcon: {
+    marginBottom: 4,
+  },
+  addButton: {
+    position: "absolute",
+    bottom: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#2e7d32",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  addButtonText: {
+    color: "white",
+    fontSize: 24,
+    fontWeight: "bold",
+    marginTop: -2,
+  },
+});

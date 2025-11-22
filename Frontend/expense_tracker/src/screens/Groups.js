@@ -20,7 +20,6 @@ import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Component for the member selection item
 const MemberItem = ({ user, selected, onToggle }) => (
   <TouchableOpacity 
     style={[styles.memberItem, selected && styles.memberItemSelected]}
@@ -178,11 +177,9 @@ export default function Groups({ navigation }) {
 
   const loadGroups = async () => {
     try {
-      // Load groups
       const groupsRes = await api.get("/groups");
       setGroups(groupsRes.data || []);
       
-      // Load all users (excluding current user)
       const usersRes = await api.get("/users");
       setAllUsers(usersRes.data.filter(u => u.id !== user?.id) || []);
     } catch (error) {
@@ -218,20 +215,17 @@ export default function Groups({ navigation }) {
     try {
       const groupData = {
         name: name.trim(),
-        members: [...selectedMembers, user.id] // Include current user as a member
+        members: [...selectedMembers, user.id] 
       };
       
       const response = await api.post("/groups", groupData);
       
-      // Reset form
       setName("");
       setSelectedMembers([]);
       setShowModal(false);
       
-      // Refresh groups list
       await loadGroups();
       
-      // Navigate to group details
       navigation.navigate('GroupDetails', { groupId: response.data.id });
     } catch (error) {
       console.error('Error creating group:', error);

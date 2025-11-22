@@ -12,84 +12,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import api from "../services/api";
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  title: { 
-    fontSize: 24, 
-    fontWeight: 'bold',
-    color: '#2e7d32',
-  },
-  addButton: {
-    backgroundColor: '#2e7d32',
-    padding: 10,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-    marginLeft: 6,
-  },
-  expenseCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 16,
-    marginVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  expenseTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#2c3e50',
-  },
-  expenseDetail: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  amount: {
-    fontWeight: 'bold',
-    color: '#2e7d32',
-    fontSize: 18,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#6c757d',
-    textAlign: 'center',
-    marginTop: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
 
 export default function Expenses({ navigation }) {
   const [items, setItems] = useState([]);
@@ -210,3 +132,82 @@ export default function Expenses({ navigation }) {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f8f9fa",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e9ecef",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#2e7d32",
+  },
+  addButton: {
+    backgroundColor: "#2e7d32",
+    padding: 10,
+    borderRadius: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
+    marginLeft: 6,
+  },
+  expenseCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  expenseTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 8,
+    color: "#2c3e50",
+  },
+  expenseDetail: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  amount: {
+    fontWeight: "bold",
+    color: "#2e7d32",
+    fontSize: 18,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#6c757d",
+    textAlign: "center",
+    marginTop: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});

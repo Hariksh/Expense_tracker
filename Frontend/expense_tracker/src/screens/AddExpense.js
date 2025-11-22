@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useReducer } from "react";
 import {
   View,
   Text,
@@ -22,6 +22,63 @@ const expenseTypes = [
   'Food', 'Shopping', 'Transport', 'Entertainment', 
   'Bills', 'Travel', 'Health', 'Other'
 ];
+
+const initialState = {
+  title: "",
+  amount: "",
+  type: "Food",
+  date: new Date(),
+  showDatePicker: false,
+  groups: [],
+  selectedGroup: null,
+  showGroupPicker: false,
+  members: [],
+  splitType: "equal",
+  isLoading: true,
+  isSubmitting: false,
+  me: null,
+  customAmounts: {},
+};
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'SET_FIELD':
+      return { ...state, [action.field]: action.value };
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload };
+    case 'SET_SUBMITTING':
+      return { ...state, isSubmitting: action.payload };
+    case 'SET_GROUPS':
+      return { ...state, groups: action.payload };
+    case 'SET_SELECTED_GROUP':
+      return { ...state, selectedGroup: action.payload, showGroupPicker: false };
+    case 'SET_MEMBERS':
+      return { ...state, members: action.payload };
+    case 'SET_CUSTOM_AMOUNTS':
+      return { ...state, customAmounts: action.payload };
+    case 'TOGGLE_MEMBER':
+      return {
+        ...state,
+        members: state.members.map(member =>
+          member.id === action.payload
+            ? { ...member, isIncluded: !member.isIncluded }
+            : member
+        ),
+      };
+    case 'LOAD_DATA_SUCCESS':
+      return {
+        ...state,
+        me: action.payload.me,
+        groups: action.payload.groups,
+        isLoading: false,
+      };
+    case 'LOAD_DATA_FAILURE':
+      return { ...state, isLoading: false };
+    default:
+      return state;
+  }
+}
+
 
 const MemberItem = ({ member, amount, onAmountChange, onToggle, isIncluded }) => (
   <View style={[styles.memberItem, isIncluded && styles.memberItemSelected]}>
@@ -54,297 +111,40 @@ const MemberItem = ({ member, amount, onAmountChange, onToggle, isIncluded }) =>
   </View>
 );
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-    padding: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  backButton: {
-    marginRight: 15,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    color: '#6c757d',
-    marginBottom: 6,
-    fontWeight: '500',
-  },
-  input: {
-    backgroundColor: '#fff',
-    padding: 14,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    fontSize: 16,
-  },
-  amountInput: {
-    flex: 1,
-    fontSize: 16,
-    padding: 0,
-    marginLeft: 4,
-  },
-  amountInputDisabled: {
-    color: '#95a5a6',
-  },
-  currencySymbol: {
-    fontSize: 16,
-    color: '#2c3e50',
-    fontWeight: '600',
-  },
-  typeContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -4,
-    marginBottom: 16,
-  },
-  typeButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    margin: 4,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    backgroundColor: '#fff',
-  },
-  typeButtonSelected: {
-    backgroundColor: '#2e7d32',
-    borderColor: '#2e7d32',
-  },
-  typeButtonText: {
-    color: '#2c3e50',
-    fontSize: 14,
-  },
-  typeButtonTextSelected: {
-    color: '#fff',
-  },
-  splitTypeContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#f0f0f0',
-    borderRadius: 10,
-    padding: 4,
-    marginBottom: 20,
-  },
-  splitTypeButton: {
-    flex: 1,
-    padding: 10,
-    alignItems: 'center',
-    borderRadius: 8,
-  },
-  splitTypeButtonSelected: {
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  splitTypeText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  memberItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  memberItemSelected: {
-    borderColor: '#2e7d32',
-    backgroundColor: '#f0f8f0',
-  },
-  memberInfo: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  memberName: {
-    marginLeft: 12,
-    fontSize: 16,
-    color: '#2c3e50',
-  },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  amountInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    paddingHorizontal: 12,
-    height: 40,
-    marginRight: 12,
-    minWidth: 100,
-  },
-  checkboxContainer: {
-    padding: 4,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#e0e0e0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkboxSelected: {
-    backgroundColor: '#2e7d32',
-    borderColor: '#2e7d32',
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginTop: 16,
-    marginBottom: 12,
-  },
-  groupSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    padding: 14,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    marginBottom: 16,
-  },
-  groupSelectorText: {
-    fontSize: 16,
-    color: '#2c3e50',
-  },
-  groupSelectorPlaceholder: {
-    color: '#95a5a6',
-  },
-  groupSelectorSelected: {
-    color: '#2e7d32',
-    fontWeight: '500',
-  },
-  saveButton: {
-    backgroundColor: '#2e7d32',
-    padding: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    paddingBottom: 12,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2c3e50',
-  },
-  groupItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  groupItemSelected: {
-    backgroundColor: '#f0f8f0',
-  },
-  groupName: {
-    fontSize: 16,
-    color: '#2c3e50',
-    marginBottom: 4,
-  },
-  groupMembers: {
-    fontSize: 12,
-    color: '#95a5a6',
-  },
-  loadingContainer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-});
-
 export default function AddExpense({ navigation, route }) {
-  const [title, setTitle] = useState("");
-  const [amount, setAmount] = useState("");
-  const [type, setType] = useState("Food");
-  const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [groups, setGroups] = useState([]);
-  const [selectedGroup, setSelectedGroup] = useState(null);
-  const [showGroupPicker, setShowGroupPicker] = useState(false);
-  const [members, setMembers] = useState([]);
-  const [splitType, setSplitType] = useState("equal");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [me, setMe] = useState(null);
-  
-  // For custom split amounts
-  const [customAmounts, setCustomAmounts] = useState({});
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const {
+    title,
+    amount,
+    type,
+    date,
+    showDatePicker,
+    groups,
+    selectedGroup,
+    showGroupPicker,
+    members,
+    splitType,
+    isLoading,
+    isSubmitting,
+    me,
+    customAmounts,
+  } = state;
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load current user
         const userStr = await AsyncStorage.getItem("user");
         const meParsed = userStr ? JSON.parse(userStr) : null;
-        setMe(meParsed);
         
-        // Load groups and members
-        await Promise.all([
-          loadGroups(),
-        ]);
+        const groupsResponse = await api.get('/groups');
+        const groupsData = groupsResponse.data || [];
+
+        dispatch({ type: 'LOAD_DATA_SUCCESS', payload: { me: meParsed, groups: groupsData } });
         
-        // If we came from a group, pre-select it
         if (route.params?.groupId) {
-          const group = groups.find(g => g.id === route.params.groupId);
+          const group = groupsData.find(g => g.id === route.params.groupId);
           if (group) {
-            setSelectedGroup(group);
+            dispatch({ type: 'SET_SELECTED_GROUP', payload: group });
             await loadGroupMembers(group.id);
           }
         }
@@ -352,35 +152,24 @@ export default function AddExpense({ navigation, route }) {
       } catch (error) {
         console.error('Error loading data:', error);
         Alert.alert('Error', 'Failed to load data');
-      } finally {
-        setIsLoading(false);
+        dispatch({ type: 'LOAD_DATA_FAILURE' });
       }
     };
     
     loadData();
-  }, []);
-  
-  const loadGroups = async () => {
-    try {
-      const response = await api.get('/groups');
-      setGroups(response.data || []);
-    } catch (error) {
-      console.error('Error loading groups:', error);
-      throw error;
-    }
-  };
+  }, [route.params?.groupId]);
   
   const loadGroupMembers = async (groupId) => {
     try {
       const response = await api.get(`/groups/${groupId}/members`);
-      setMembers(response.data || []);
+      const membersData = response.data || [];
+      dispatch({ type: 'SET_MEMBERS', payload: membersData });
       
-      // Initialize custom amounts
       const amounts = {};
-      response.data.forEach(member => {
+      membersData.forEach(member => {
         amounts[member.id] = '';
       });
-      setCustomAmounts(amounts);
+      dispatch({ type: 'SET_CUSTOM_AMOUNTS', payload: amounts });
       
     } catch (error) {
       console.error('Error loading group members:', error);
@@ -389,41 +178,31 @@ export default function AddExpense({ navigation, route }) {
   };
 
   const handleGroupSelect = async (group) => {
-    setSelectedGroup(group);
-    setShowGroupPicker(false);
+    dispatch({ type: 'SET_SELECTED_GROUP', payload: group });
     await loadGroupMembers(group.id);
   };
   
   const toggleMember = (memberId) => {
-    setMembers(prevMembers => 
-      prevMembers.map(member => 
-        member.id === memberId 
-          ? { ...member, isIncluded: !member.isIncluded }
-          : member
-      )
-    );
+    dispatch({ type: 'TOGGLE_MEMBER', payload: memberId });
   };
   
   const handleAmountChange = (memberId, value) => {
-    // Only allow numbers and decimal point
     const cleanedValue = value.replace(/[^0-9.]/g, '');
     
-    // If empty string, set to empty (to allow clearing)
     if (cleanedValue === '') {
-      setCustomAmounts(prev => ({
-        ...prev,
-        [memberId]: ''
-      }));
+      dispatch({
+        type: 'SET_CUSTOM_AMOUNTS',
+        payload: { ...customAmounts, [memberId]: '' },
+      });
       return;
     }
     
-    // Convert to number and check if valid
     const numValue = parseFloat(cleanedValue);
     if (!isNaN(numValue) && numValue >= 0) {
-      setCustomAmounts(prev => ({
-        ...prev,
-        [memberId]: cleanedValue
-      }));
+      dispatch({
+        type: 'SET_CUSTOM_AMOUNTS',
+        payload: { ...customAmounts, [memberId]: cleanedValue },
+      });
     }
   };
   
@@ -454,7 +233,6 @@ export default function AddExpense({ navigation, route }) {
       sum += amount;
     }
     
-    // Allow small floating point differences
     return Math.abs(sum - totalAmount) < 0.01;
   };
 
@@ -464,7 +242,6 @@ export default function AddExpense({ navigation, route }) {
       return;
     }
     
-    // Basic validation
     if (!title.trim()) {
       Alert.alert('Error', 'Please enter a title');
       return;
@@ -480,13 +257,12 @@ export default function AddExpense({ navigation, route }) {
       return;
     }
     
-    // For custom split, validate the amounts
     if (splitType === 'custom' && !validateCustomSplit()) {
       Alert.alert('Error', 'The sum of individual amounts must equal the total amount');
       return;
     }
     
-    setIsSubmitting(true);
+    dispatch({ type: 'SET_SUBMITTING', payload: true });
     
     try {
       const expenseData = {
@@ -500,7 +276,6 @@ export default function AddExpense({ navigation, route }) {
         splits: []
       };
       
-      // Prepare the splits
       if (selectedGroup) {
         const includedMembers = members.filter(m => m.isIncluded);
         
@@ -512,7 +287,6 @@ export default function AddExpense({ navigation, route }) {
             amount: parseFloat(share.toFixed(2)),
           }));
         } else {
-          // Custom split
           expenseData.splits = includedMembers.map(member => ({
             user_id: member.id,
             amount: parseFloat(customAmounts[member.id] || '0'),
@@ -522,7 +296,6 @@ export default function AddExpense({ navigation, route }) {
       
       await api.post('/expenses', expenseData);
       
-      // Navigate back with a success flag
       navigation.navigate('Expenses', { refresh: true });
       
     } catch (error) {
@@ -532,7 +305,7 @@ export default function AddExpense({ navigation, route }) {
         error.response?.data?.message || 'Failed to create expense. Please try again.'
       );
     } finally {
-      setIsSubmitting(false);
+      dispatch({ type: 'SET_SUBMITTING', payload: false });
     }
   };
 
@@ -558,12 +331,11 @@ export default function AddExpense({ navigation, route }) {
       </View>
       
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Group Selection */}
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Group (optional)</Text>
           <TouchableOpacity 
             style={styles.groupSelector}
-            onPress={() => setShowGroupPicker(true)}
+            onPress={() => dispatch({ type: 'SET_FIELD', field: 'showGroupPicker', value: true })}
           >
             <Text 
               style={[
@@ -582,19 +354,17 @@ export default function AddExpense({ navigation, route }) {
           </TouchableOpacity>
         </View>
         
-        {/* Title */}
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Title</Text>
           <TextInput
             placeholder="e.g., Dinner, Groceries, Movie tickets"
             value={title}
-            onChangeText={setTitle}
+            onChangeText={(value) => dispatch({ type: 'SET_FIELD', field: 'title', value })}
             style={styles.input}
             autoCapitalize="words"
           />
         </View>
         
-        {/* Amount */}
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Amount (₹)</Text>
           <View style={styles.amountInputContainer}>
@@ -602,7 +372,7 @@ export default function AddExpense({ navigation, route }) {
             <TextInput
               placeholder="0.00"
               value={amount}
-              onChangeText={(text) => setAmount(text.replace(/[^0-9.]/g, ''))}
+              onChangeText={(text) => dispatch({ type: 'SET_FIELD', field: 'amount', value: text.replace(/[^0-9.]/g, '') })}
               keyboardType="numeric"
               style={styles.amountInput}
               returnKeyType="next"
@@ -610,7 +380,6 @@ export default function AddExpense({ navigation, route }) {
           </View>
         </View>
         
-        {/* Expense Type */}
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Category</Text>
           <View style={styles.typeContainer}>
@@ -621,7 +390,7 @@ export default function AddExpense({ navigation, route }) {
                   styles.typeButton,
                   type === expenseType && styles.typeButtonSelected
                 ]}
-                onPress={() => setType(expenseType)}
+                onPress={() => dispatch({ type: 'SET_FIELD', field: 'type', value: expenseType })}
               >
                 <Text 
                   style={[
@@ -636,12 +405,11 @@ export default function AddExpense({ navigation, route }) {
           </View>
         </View>
         
-        {/* Date */}
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Date</Text>
           <TouchableOpacity 
             style={[styles.input, { justifyContent: 'center' }]}
-            onPress={() => setShowDatePicker(true)}
+            onPress={() => dispatch({ type: 'SET_FIELD', field: 'showDatePicker', value: true })}
           >
             <Text>{date.toLocaleDateString('en-IN', { 
               day: 'numeric', 
@@ -656,16 +424,15 @@ export default function AddExpense({ navigation, route }) {
               mode="date"
               display="default"
               onChange={(event, selectedDate) => {
-                setShowDatePicker(false);
+                dispatch({ type: 'SET_FIELD', field: 'showDatePicker', value: false });
                 if (selectedDate) {
-                  setDate(selectedDate);
+                  dispatch({ type: 'SET_FIELD', field: 'date', value: selectedDate });
                 }
               }}
             />
           )}
         </View>
         
-        {/* Split Type */}
         {selectedGroup && members.length > 0 && (
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Split Type</Text>
@@ -675,7 +442,7 @@ export default function AddExpense({ navigation, route }) {
                   styles.splitTypeButton,
                   splitType === 'equal' && styles.splitTypeButtonSelected
                 ]}
-                onPress={() => setSplitType('equal')}
+                onPress={() => dispatch({ type: 'SET_FIELD', field: 'splitType', value: 'equal' })}
               >
                 <Text 
                   style={[
@@ -691,7 +458,7 @@ export default function AddExpense({ navigation, route }) {
                   styles.splitTypeButton,
                   splitType === 'custom' && styles.splitTypeButtonSelected
                 ]}
-                onPress={() => setSplitType('custom')}
+                onPress={() => dispatch({ type: 'SET_FIELD', field: 'splitType', value: 'custom' })}
               >
                 <Text 
                   style={[
@@ -706,7 +473,6 @@ export default function AddExpense({ navigation, route }) {
           </View>
         )}
         
-        {/* Members List */}
         {selectedGroup && members.length > 0 && (
           <View style={styles.inputContainer}>
             <Text style={styles.sectionTitle}>
@@ -730,7 +496,6 @@ export default function AddExpense({ navigation, route }) {
           </View>
         )}
         
-        {/* Save Button */}
         <TouchableOpacity
           style={[styles.saveButton, isSubmitting && { opacity: 0.7 }]}
           onPress={submit}
@@ -746,18 +511,17 @@ export default function AddExpense({ navigation, route }) {
         </TouchableOpacity>
       </ScrollView>
       
-      {/* Group Picker Modal */}
       <Modal
         visible={showGroupPicker}
         transparent
         animationType="slide"
-        onRequestClose={() => setShowGroupPicker(false)}
+        onRequestClose={() => dispatch({ type: 'SET_FIELD', field: 'showGroupPicker', value: false })}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Group</Text>
-              <TouchableOpacity onPress={() => setShowGroupPicker(false)}>
+              <TouchableOpacity onPress={() => dispatch({ type: 'SET_FIELD', field: 'showGroupPicker', value: false })}>
                 <Ionicons name="close" size={24} color="#6c757d" />
               </TouchableOpacity>
             </View>
@@ -791,3 +555,258 @@ export default function AddExpense({ navigation, route }) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f8f9fa",
+    padding: 16,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  backButton: {
+    marginRight: 15,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#2c3e50",
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    color: "#6c757d",
+    marginBottom: 6,
+    fontWeight: "500",
+  },
+  input: {
+    backgroundColor: "#fff",
+    padding: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    fontSize: 16,
+  },
+  amountInput: {
+    flex: 1,
+    fontSize: 16,
+    padding: 0,
+    marginLeft: 4,
+  },
+  amountInputDisabled: {
+    color: "#95a5a6",
+  },
+  currencySymbol: {
+    fontSize: 16,
+    color: "#2c3e50",
+    fontWeight: "600",
+  },
+  typeContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginHorizontal: -4,
+    marginBottom: 16,
+  },
+  typeButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    margin: 4,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    backgroundColor: "#fff",
+  },
+  typeButtonSelected: {
+    backgroundColor: "#2e7d32",
+    borderColor: "#2e7d32",
+  },
+  typeButtonText: {
+    color: "#2c3e50",
+    fontSize: 14,
+  },
+  typeButtonTextSelected: {
+    color: "#fff",
+  },
+  splitTypeContainer: {
+    flexDirection: "row",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 10,
+    padding: 4,
+    marginBottom: 20,
+  },
+  splitTypeButton: {
+    flex: 1,
+    padding: 10,
+    alignItems: "center",
+    borderRadius: 8,
+  },
+  splitTypeButtonSelected: {
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  splitTypeText: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  memberItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  memberItemSelected: {
+    borderColor: "#2e7d32",
+    backgroundColor: "#f0f8f0",
+  },
+  memberInfo: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  memberName: {
+    marginLeft: 12,
+    fontSize: 16,
+    color: "#2c3e50",
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  amountInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    paddingHorizontal: 12,
+    height: 40,
+    marginRight: 12,
+    minWidth: 100,
+  },
+  checkboxContainer: {
+    padding: 4,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#e0e0e0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkboxSelected: {
+    backgroundColor: "#2e7d32",
+    borderColor: "#2e7d32",
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2c3e50",
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  groupSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
+    padding: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    marginBottom: 16,
+  },
+  groupSelectorText: {
+    fontSize: 16,
+    color: "#2c3e50",
+  },
+  groupSelectorPlaceholder: {
+    color: "#95a5a6",
+  },
+  groupSelectorSelected: {
+    color: "#2e7d32",
+    fontWeight: "500",
+  },
+  saveButton: {
+    backgroundColor: "#2e7d32",
+    padding: 16,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  saveButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    maxHeight: "80%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+    paddingBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#2c3e50",
+  },
+  groupItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  groupItemSelected: {
+    backgroundColor: "#f0f8f0",
+  },
+  groupName: {
+    fontSize: 16,
+    color: "#2c3e50",
+    marginBottom: 4,
+  },
+  groupMembers: {
+    fontSize: 12,
+    color: "#95a5a6",
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: "center",
+  },
+});

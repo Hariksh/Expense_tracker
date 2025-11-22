@@ -12,136 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { AuthContext } from "../context/AuthContext";
-import api from "../services/api";
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  header: {
-    padding: 20,
-    alignItems: 'center',
-    backgroundColor: '#2e7d32',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    paddingBottom: 30,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#e0e0e0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 3,
-    borderColor: '#fff',
-  },
-  avatarText: {
-    fontSize: 40,
-    color: '#757575',
-    fontWeight: 'bold',
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  email: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 20,
-  },
-  content: {
-    padding: 20,
-    marginTop: -20,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingBottom: 8,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: '#6c757d',
-  },
-  infoValue: {
-    fontSize: 16,
-    color: '#2c3e50',
-    fontWeight: '500',
-  },
-  logoutButton: {
-    backgroundColor: '#e53935',
-    padding: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 20,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  logoutText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  statBox: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    flex: 1,
-    marginHorizontal: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2e7d32',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#6c757d',
-    textAlign: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
 
 export default function Profile({ navigation }) {
   const { user, logout } = useContext(AuthContext);
@@ -151,8 +22,6 @@ export default function Profile({ navigation }) {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        // Simulate loading user stats
-        // In a real app, you would fetch this from your API
         setTimeout(() => {
           setStats({
             totalExpenses: 12,
@@ -292,3 +161,132 @@ export default function Profile({ navigation }) {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f8f9fa",
+  },
+  header: {
+    padding: 20,
+    alignItems: "center",
+    backgroundColor: "#2e7d32",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    paddingBottom: 30,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#e0e0e0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+    borderWidth: 3,
+    borderColor: "#fff",
+  },
+  avatarText: {
+    fontSize: 40,
+    color: "#757575",
+    fontWeight: "bold",
+  },
+  name: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 4,
+  },
+  email: {
+    fontSize: 16,
+    color: "rgba(255, 255, 255, 0.8)",
+    marginBottom: 20,
+  },
+  content: {
+    padding: 20,
+    marginTop: -20,
+  },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#2c3e50",
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    paddingBottom: 8,
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: "#6c757d",
+  },
+  infoValue: {
+    fontSize: 16,
+    color: "#2c3e50",
+    fontWeight: "500",
+  },
+  logoutButton: {
+    backgroundColor: "#e53935",
+    padding: 16,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 20,
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  logoutText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+  statsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  statBox: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    flex: 1,
+    marginHorizontal: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#2e7d32",
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: "#6c757d",
+    textAlign: "center",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});
