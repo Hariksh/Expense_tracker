@@ -90,7 +90,6 @@ function reducer(state, action) {
 export default function Groups({ navigation }) {
   const { user } = useContext(AuthContext);
   const [state, dispatch] = useReducer(reducer, initialState);
-  
   const {
     groups,
     contacts,
@@ -204,7 +203,7 @@ export default function Groups({ navigation }) {
       dispatch({ type: 'SET_FIELD', field: 'newContactEmail', value: "" });
       dispatch({ type: 'SET_FIELD', field: 'showAddContact', value: false });
       Alert.alert("Success", "Contact added successfully");
-      
+
       dispatch({ type: 'SET_FIELD', field: 'page', value: 1 });
       dispatch({ type: 'SET_FIELD', field: 'hasMore', value: true });
       loadContacts(true);
@@ -276,32 +275,10 @@ export default function Groups({ navigation }) {
         )}
 
         {item.members && item.members.length > 0 && (
-          <View style={{ marginTop: 8, flexDirection: 'row', flexWrap: 'wrap' }}>
-            {item.members.slice(0, 4).map((member, index) => (
-              <View key={index} style={[styles.avatar, {
-                marginLeft: index > 0 ? -10 : 0,
-                borderWidth: 2,
-                borderColor: '#fff',
-                zIndex: 10 - index
-              }]}>
-                <Text style={[styles.avatarText, { fontSize: 12 }]}>
-                  {member.name ? member.name.charAt(0).toUpperCase() : 'U'}
-                </Text>
-              </View>
-            ))}
-            {item.members.length > 4 && (
-              <View style={[styles.avatar, {
-                backgroundColor: '#e0e0e0',
-                marginLeft: -10,
-                zIndex: 5,
-                justifyContent: 'center',
-                alignItems: 'center'
-              }]}>
-                <Text style={[styles.avatarText, { fontSize: 12, color: '#757575' }]}>
-                  +{item.members.length - 4}
-                </Text>
-              </View>
-            )}
+          <View style={{ marginTop: 8 }}>
+            <Text style={{ color: '#6c757d', fontSize: 14 }} numberOfLines={1}>
+              {item.members.map(m => m.user?.name || m.user?.email).join(', ')}
+            </Text>
           </View>
         )}
       </View>
