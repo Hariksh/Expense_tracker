@@ -82,13 +82,21 @@ export default function ExpenseDetail({ navigation, route }) {
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Expense Details</Text>
                 {isPayer ? (
-                    <TouchableOpacity onPress={handleDelete} disabled={deleting}>
-                        {deleting ? (
-                            <ActivityIndicator size="small" color="#e53935" />
-                        ) : (
-                            <Ionicons name="trash-outline" size={24} color="#e53935" />
-                        )}
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row' }}>
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate('AddExpense', { expenseId: expense.id, isEditing: true })}
+                            style={{ marginRight: 16 }}
+                        >
+                            <Ionicons name="create-outline" size={24} color="#2e7d32" />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleDelete} disabled={deleting}>
+                            {deleting ? (
+                                <ActivityIndicator size="small" color="#e53935" />
+                            ) : (
+                                <Ionicons name="trash-outline" size={24} color="#e53935" />
+                            )}
+                        </TouchableOpacity>
+                    </View>
                 ) : (
                     <View style={{ width: 24 }} />
                 )}

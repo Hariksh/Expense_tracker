@@ -51,7 +51,7 @@ function reducer(state, action) {
     case 'SET_GROUPS':
       return { ...state, groups: action.payload };
     case 'SET_SELECTED_GROUP':
-      return { ...state, selectedGroup: action.payload, showGroupPicker: false };
+      return { ...state, selectedGroup: action.payload, showGroupPicker: false, members: [] };
     case 'SET_MEMBERS':
       return { ...state, members: action.payload };
     case 'SET_CUSTOM_AMOUNTS':

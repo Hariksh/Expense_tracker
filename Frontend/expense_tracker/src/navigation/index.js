@@ -43,8 +43,8 @@ function MainTabs({ navigation }) {
         }}
       />
       <Tab.Screen
-        name="AddExpense"
-        component={View} // Dummy component
+        name="AddExpenseTab"
+        component={View} 
         options={{
           tabBarButton: () => (
             <TouchableOpacity

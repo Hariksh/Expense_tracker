@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { 
-  View, 
-  Text, 
-  FlatList, 
-  TouchableOpacity, 
-  StyleSheet, 
-  SafeAreaView, 
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
   ActivityIndicator,
   RefreshControl
 } from "react-native";
@@ -37,7 +37,7 @@ export default function Expenses({ navigation }) {
 
   useEffect(() => {
     loadExpenses();
-    
+
     const unsubscribe = navigation.addListener('focus', () => {
       loadExpenses();
     });
@@ -46,17 +46,17 @@ export default function Expenses({ navigation }) {
   }, [navigation]);
 
   const renderExpenseItem = ({ item }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.expenseCard}
       onPress={() => navigation.navigate('ExpenseDetail', { expenseId: item.id })}
     >
       <Text style={styles.expenseTitle}>{item.title}</Text>
-      
+
       <View style={styles.expenseDetail}>
         <Text style={styles.amount}>₹{parseFloat(item.amount).toFixed(2)}</Text>
         <Text style={{ color: '#6c757d' }}>{item.type}</Text>
       </View>
-      
+
       <View style={styles.expenseDetail}>
         <Text style={{ color: '#6c757d' }}>
           {new Date(item.date).toLocaleDateString('en-IN', {
@@ -69,7 +69,7 @@ export default function Expenses({ navigation }) {
           {item.paid_by === 'you' ? 'You paid' : 'You owe'}
         </Text>
       </View>
-      
+
       {item.splits?.length > 0 && (
         <View style={{ marginTop: 12, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#e9ecef' }}>
           <Text style={{ color: '#6c757d', marginBottom: 4 }}>Splits:</Text>
@@ -104,7 +104,7 @@ export default function Expenses({ navigation }) {
           <Text style={styles.buttonText}>Add</Text>
         </TouchableOpacity>
       </View>
-      
+
       {items.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="receipt-outline" size={64} color="#e9ecef" />
