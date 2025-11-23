@@ -1,17 +1,18 @@
 import React, { useContext, useState, useEffect } from "react";
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  StyleSheet, 
-  SafeAreaView, 
-  ScrollView, 
-  Image, 
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  Image,
   Alert,
   ActivityIndicator
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { AuthContext } from "../context/AuthContext";
+import api from "../services/api";
 
 
 export default function Profile({ navigation }) {
@@ -22,23 +23,22 @@ export default function Profile({ navigation }) {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        setTimeout(() => {
-          setStats({
-            totalExpenses: 12,
-            totalGroups: 3,
-            totalOwed: 1250.75,
-            totalPaid: 850.50,
-          });
-          setLoading(false);
-        }, 800);
+        const res = await api.get("/auth/stats");
+        setStats(res.data);
       } catch (error) {
         console.error('Error loading stats:', error);
+      } finally {
         setLoading(false);
       }
     };
 
     loadStats();
-  }, []);
+
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadStats();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -107,8 +107,8 @@ export default function Profile({ navigation }) {
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Member Since</Text>
               <Text style={styles.infoValue}>
-                {user?.createdAt 
-                  ? new Date(user.createdAt).toLocaleDateString() 
+                {user?.createdAt
+                  ? new Date(user.createdAt).toLocaleDateString()
                   : 'N/A'}
               </Text>
             </View>
@@ -116,30 +116,30 @@ export default function Profile({ navigation }) {
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Settings</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={{ paddingVertical: 12, flexDirection: 'row', alignItems: 'center' }}
-              onPress={() => {}}
+              onPress={() => { }}
             >
               <Ionicons name="notifications-outline" size={20} color="#6c757d" />
               <Text style={{ marginLeft: 12, color: '#2c3e50' }}>Notifications</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={{ paddingVertical: 12, flexDirection: 'row', alignItems: 'center' }}
-              onPress={() => {}}
+              onPress={() => { }}
             >
               <Ionicons name="lock-closed-outline" size={20} color="#6c757d" />
               <Text style={{ marginLeft: 12, color: '#2c3e50' }}>Change Password</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={{ paddingVertical: 12, flexDirection: 'row', alignItems: 'center' }}
-              onPress={() => {}}
+              onPress={() => { }}
             >
               <Ionicons name="help-circle-outline" size={20} color="#6c757d" />
               <Text style={{ marginLeft: 12, color: '#2c3e50' }}>Help & Support</Text>
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.logoutButton}
             onPress={handleLogout}
           >
@@ -147,12 +147,12 @@ export default function Profile({ navigation }) {
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
 
-          <Text style={{ 
-            textAlign: 'center', 
-            color: '#adb5bd', 
+          <Text style={{
+            textAlign: 'center',
+            color: '#adb5bd',
             marginTop: 24,
             marginBottom: 16,
-            fontSize: 12 
+            fontSize: 12
           }}>
             Expense Tracker v1.0.0
           </Text>

@@ -10,6 +10,8 @@ import Expenses from "../screens/Expenses";
 import AddExpense from "../screens/AddExpense";
 import Groups from "../screens/Groups";
 import Profile from "../screens/Profile";
+import ExpenseDetail from "../screens/ExpenseDetail";
+import GroupDetails from "../screens/GroupDetails";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 
 const Stack = createNativeStackNavigator();
@@ -27,21 +29,21 @@ function MainTabs({ navigation }) {
         tabBarInactiveTintColor: '#95a5a6',
       })}
     >
-      <Tab.Screen 
-        name="Expenses" 
-        component={Expenses} 
+      <Tab.Screen
+        name="Expenses"
+        component={Expenses}
         options={{
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons 
-              name={focused ? 'receipt' : 'receipt-outline'} 
-              size={24} 
-              color={color} 
+            <Ionicons
+              name={focused ? 'receipt' : 'receipt-outline'}
+              size={24}
+              color={color}
             />
           ),
         }}
       />
-      <Tab.Screen 
-        name="AddExpense" 
+      <Tab.Screen
+        name="AddExpense"
         component={View} // Dummy component
         options={{
           tabBarButton: () => (
@@ -61,28 +63,28 @@ function MainTabs({ navigation }) {
           },
         })}
       />
-      <Tab.Screen 
-        name="Groups" 
-        component={Groups} 
+      <Tab.Screen
+        name="Groups"
+        component={Groups}
         options={{
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons 
-              name={focused ? 'people' : 'people-outline'} 
-              size={24} 
-              color={color} 
+            <Ionicons
+              name={focused ? 'people' : 'people-outline'}
+              size={24}
+              color={color}
             />
           ),
         }}
       />
-      <Tab.Screen 
-        name="Profile" 
-        component={Profile} 
+      <Tab.Screen
+        name="Profile"
+        component={Profile}
         options={{
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons 
-              name={focused ? 'person' : 'person-outline'} 
-              size={24} 
-              color={color} 
+            <Ionicons
+              name={focused ? 'person' : 'person-outline'}
+              size={24}
+              color={color}
             />
           ),
         }}
@@ -94,7 +96,7 @@ function MainTabs({ navigation }) {
 export default function RootNav() {
   const { token, ready } = useContext(AuthContext);
   if (!ready) return null;
-  
+
   return (
     <NavigationContainer>
       {token ? (
@@ -117,6 +119,16 @@ export default function RootNav() {
                 fontWeight: '600',
               },
             }}
+          />
+          <Stack.Screen
+            name="ExpenseDetail"
+            component={ExpenseDetail}
+            options={{ title: "Expense Details" }}
+          />
+          <Stack.Screen
+            name="GroupDetails"
+            component={GroupDetails}
+            options={{ headerShown: false }}
           />
         </Stack.Navigator>
       ) : (

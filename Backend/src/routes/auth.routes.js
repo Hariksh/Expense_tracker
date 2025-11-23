@@ -57,4 +57,62 @@ router.post(
   }
 );
 
+const auth = require("../middlewares/auth");
+
+router.get("/users", auth, async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      where: { id: { not: req.user.id } },
+      select: { id: true, name: true, email: true },
+    });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
+router.get("/stats", auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const totalGroups = await prisma.groupMember.count({
+      where: { userId },
+    });
+
+    const totalExpenses = await prisma.expense.count({
+      where: {
+        OR: [
+          { paidBy: userId },
+          { splits: { some: { userId } } },
+        ],
+      },
+    });
+
+    const paidAgg = await prisma.expense.aggregate({
+      where: { paidBy: userId },
+      _sum: { amount: true },
+    });
+    const totalPaid = paidAgg._sum.amount || 0;
+
+    const owedAgg = await prisma.expenseSplit.aggregate({
+      where: {
+        userId,
+        expense: { paidBy: { not: userId } },
+      },
+      _sum: { shareAmount: true },
+    });
+    const totalOwed = owedAgg._sum.shareAmount || 0;
+
+    res.json({
+      totalGroups,
+      totalExpenses,
+      totalPaid,
+      totalOwed,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch stats" });
+  }
+});
+
 module.exports = router;

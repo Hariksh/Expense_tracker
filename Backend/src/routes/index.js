@@ -1,12 +1,14 @@
 const { Router } = require("express");
-const auth = require("./auth.routes");
-const expenses = require("./expense.routes");
-const groups = require("./group.routes");
+const authRoutes = require("./auth.routes");
+const expenseRoutes = require("./expense.routes");
+const groupRoutes = require("./group.routes");
+const contactRoutes = require("./contact.routes");
 
 const router = Router();
 
-router.use("/auth", auth);
-router.use("/expenses", expenses);
-router.use("/groups", groups);
+router.use("/auth", authRoutes);
+router.use("/expenses", expenseRoutes);
+router.use("/groups", groupRoutes);
+router.use("/contacts", contactRoutes);
 
 module.exports = router;

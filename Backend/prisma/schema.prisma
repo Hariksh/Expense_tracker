@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -14,9 +15,23 @@ model User {
   createdAt DateTime @default(now())
 
   expenses      Expense[]      @relation("UserExpenses")
-  groupMembers  GroupMember[]
-  ExpenseSplit  ExpenseSplit[]
+  groups        GroupMember[]
+  splits        ExpenseSplit[]
+  contacts      Contact[]      @relation("UserContacts")
+  addedBy       Contact[]      @relation("ContactAddedBy")
   createdGroups Group[]        @relation("CreatedGroups")
+}
+
+model Contact {
+  id            Int      @id @default(autoincrement())
+  ownerId       Int
+  contactUserId Int
+  createdAt     DateTime @default(now())
+
+  owner         User     @relation("UserContacts", fields: [ownerId], references: [id])
+  contactUser   User     @relation("ContactAddedBy", fields: [contactUserId], references: [id])
+
+  @@unique([ownerId, contactUserId])
 }
 
 model Group {

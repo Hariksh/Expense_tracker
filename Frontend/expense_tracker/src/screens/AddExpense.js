@@ -19,7 +19,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 const expenseTypes = [
-  'Food', 'Shopping', 'Transport', 'Entertainment', 
+  'Food', 'Shopping', 'Transport', 'Entertainment',
   'Bills', 'Travel', 'Health', 'Other'
 ];
 
@@ -90,7 +90,7 @@ const MemberItem = ({ member, amount, onAmountChange, onToggle, isIncluded }) =>
       </View>
       <Text style={styles.memberName}>{member.name || member.email}</Text>
     </View>
-    
+
     <View style={styles.amountInputContainer}>
       <Text style={styles.currencySymbol}>₹</Text>
       <TextInput
@@ -102,7 +102,7 @@ const MemberItem = ({ member, amount, onAmountChange, onToggle, isIncluded }) =>
         editable={isIncluded}
       />
     </View>
-    
+
     <TouchableOpacity onPress={() => onToggle(member.id)} style={styles.checkboxContainer}>
       <View style={[styles.checkbox, isIncluded && styles.checkboxSelected]}>
         {isIncluded && <Ionicons name="checkmark" size={16} color="#fff" />}
@@ -135,12 +135,12 @@ export default function AddExpense({ navigation, route }) {
       try {
         const userStr = await AsyncStorage.getItem("user");
         const meParsed = userStr ? JSON.parse(userStr) : null;
-        
+
         const groupsResponse = await api.get('/groups');
         const groupsData = groupsResponse.data || [];
 
         dispatch({ type: 'LOAD_DATA_SUCCESS', payload: { me: meParsed, groups: groupsData } });
-        
+
         if (route.params?.groupId) {
           const group = groupsData.find(g => g.id === route.params.groupId);
           if (group) {
@@ -148,29 +148,29 @@ export default function AddExpense({ navigation, route }) {
             await loadGroupMembers(group.id);
           }
         }
-        
+
       } catch (error) {
         console.error('Error loading data:', error);
         Alert.alert('Error', 'Failed to load data');
         dispatch({ type: 'LOAD_DATA_FAILURE' });
       }
     };
-    
+
     loadData();
   }, [route.params?.groupId]);
-  
+
   const loadGroupMembers = async (groupId) => {
     try {
       const response = await api.get(`/groups/${groupId}/members`);
       const membersData = response.data || [];
       dispatch({ type: 'SET_MEMBERS', payload: membersData });
-      
+
       const amounts = {};
       membersData.forEach(member => {
         amounts[member.id] = '';
       });
       dispatch({ type: 'SET_CUSTOM_AMOUNTS', payload: amounts });
-      
+
     } catch (error) {
       console.error('Error loading group members:', error);
       throw error;
@@ -181,14 +181,14 @@ export default function AddExpense({ navigation, route }) {
     dispatch({ type: 'SET_SELECTED_GROUP', payload: group });
     await loadGroupMembers(group.id);
   };
-  
+
   const toggleMember = (memberId) => {
     dispatch({ type: 'TOGGLE_MEMBER', payload: memberId });
   };
-  
+
   const handleAmountChange = (memberId, value) => {
     const cleanedValue = value.replace(/[^0-9.]/g, '');
-    
+
     if (cleanedValue === '') {
       dispatch({
         type: 'SET_CUSTOM_AMOUNTS',
@@ -196,7 +196,7 @@ export default function AddExpense({ navigation, route }) {
       });
       return;
     }
-    
+
     const numValue = parseFloat(cleanedValue);
     if (!isNaN(numValue) && numValue >= 0) {
       dispatch({
@@ -205,34 +205,34 @@ export default function AddExpense({ navigation, route }) {
       });
     }
   };
-  
+
   const calculateEqualSplit = () => {
     if (!amount || isNaN(parseFloat(amount)) || members.length === 0) return 0;
-    
+
     const totalAmount = parseFloat(amount);
     const includedMembers = members.filter(m => m.isIncluded);
-    
+
     if (includedMembers.length === 0) return 0;
-    
+
     const share = totalAmount / includedMembers.length;
     return share.toFixed(2);
   };
-  
+
   const validateCustomSplit = () => {
     if (!amount || isNaN(parseFloat(amount))) return false;
-    
+
     const totalAmount = parseFloat(amount);
     const includedMembers = members.filter(m => m.isIncluded);
-    
+
     if (includedMembers.length === 0) return false;
-    
+
     let sum = 0;
     for (const member of includedMembers) {
       const amount = parseFloat(customAmounts[member.id] || '0');
       if (isNaN(amount) || amount < 0) return false;
       sum += amount;
     }
-    
+
     return Math.abs(sum - totalAmount) < 0.01;
   };
 
@@ -241,29 +241,29 @@ export default function AddExpense({ navigation, route }) {
       Alert.alert('Error', 'User not authenticated');
       return;
     }
-    
+
     if (!title.trim()) {
       Alert.alert('Error', 'Please enter a title');
       return;
     }
-    
+
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
       Alert.alert('Error', 'Please enter a valid amount');
       return;
     }
-    
+
     if (selectedGroup && members.filter(m => m.isIncluded).length === 0) {
       Alert.alert('Error', 'Please include at least one member');
       return;
     }
-    
+
     if (splitType === 'custom' && !validateCustomSplit()) {
       Alert.alert('Error', 'The sum of individual amounts must equal the total amount');
       return;
     }
-    
+
     dispatch({ type: 'SET_SUBMITTING', payload: true });
-    
+
     try {
       const expenseData = {
         title: title.trim(),
@@ -275,13 +275,13 @@ export default function AddExpense({ navigation, route }) {
         split_type: splitType,
         splits: []
       };
-      
+
       if (selectedGroup) {
         const includedMembers = members.filter(m => m.isIncluded);
-        
+
         if (splitType === 'equal') {
           const share = parseFloat(amount) / (includedMembers.length || 1);
-          
+
           expenseData.splits = includedMembers.map(member => ({
             user_id: member.id,
             amount: parseFloat(share.toFixed(2)),
@@ -292,12 +292,21 @@ export default function AddExpense({ navigation, route }) {
             amount: parseFloat(customAmounts[member.id] || '0'),
           }));
         }
+      } else {
+        // Personal expense: split with self (100%)
+        expenseData.splits = [{
+          user_id: me.id,
+          amount: parseFloat(amount)
+        }];
       }
-      
+
       await api.post('/expenses', expenseData);
-      
-      navigation.navigate('Expenses', { refresh: true });
-      
+
+      navigation.navigate('MainTabs', {
+        screen: 'Expenses',
+        params: { refresh: true }
+      });
+
     } catch (error) {
       console.error('Error creating expense:', error);
       Alert.alert(
@@ -320,7 +329,7 @@ export default function AddExpense({ navigation, route }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
@@ -329,31 +338,31 @@ export default function AddExpense({ navigation, route }) {
         <Text style={styles.title}>Add Expense</Text>
         <View style={{ width: 40 }} />
       </View>
-      
+
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Group (optional)</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.groupSelector}
             onPress={() => dispatch({ type: 'SET_FIELD', field: 'showGroupPicker', value: true })}
           >
-            <Text 
+            <Text
               style={[
-                styles.groupSelectorText, 
+                styles.groupSelectorText,
                 !selectedGroup && styles.groupSelectorPlaceholder,
                 selectedGroup && styles.groupSelectorSelected
               ]}
             >
               {selectedGroup ? selectedGroup.name : 'Select a group'}
             </Text>
-            <Ionicons 
-              name="chevron-down" 
-              size={20} 
-              color={selectedGroup ? "#2e7d32" : "#95a5a6"} 
+            <Ionicons
+              name="chevron-down"
+              size={20}
+              color={selectedGroup ? "#2e7d32" : "#95a5a6"}
             />
           </TouchableOpacity>
         </View>
-        
+
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Title</Text>
           <TextInput
@@ -364,7 +373,7 @@ export default function AddExpense({ navigation, route }) {
             autoCapitalize="words"
           />
         </View>
-        
+
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Amount (₹)</Text>
           <View style={styles.amountInputContainer}>
@@ -379,7 +388,7 @@ export default function AddExpense({ navigation, route }) {
             />
           </View>
         </View>
-        
+
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Category</Text>
           <View style={styles.typeContainer}>
@@ -392,7 +401,7 @@ export default function AddExpense({ navigation, route }) {
                 ]}
                 onPress={() => dispatch({ type: 'SET_FIELD', field: 'type', value: expenseType })}
               >
-                <Text 
+                <Text
                   style={[
                     styles.typeButtonText,
                     type === expenseType && styles.typeButtonTextSelected
@@ -404,20 +413,20 @@ export default function AddExpense({ navigation, route }) {
             ))}
           </View>
         </View>
-        
+
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Date</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.input, { justifyContent: 'center' }]}
             onPress={() => dispatch({ type: 'SET_FIELD', field: 'showDatePicker', value: true })}
           >
-            <Text>{date.toLocaleDateString('en-IN', { 
-              day: 'numeric', 
-              month: 'long', 
-              year: 'numeric' 
+            <Text>{date.toLocaleDateString('en-IN', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
             })}</Text>
           </TouchableOpacity>
-          
+
           {showDatePicker && (
             <DateTimePicker
               value={date}
@@ -432,7 +441,7 @@ export default function AddExpense({ navigation, route }) {
             />
           )}
         </View>
-        
+
         {selectedGroup && members.length > 0 && (
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Split Type</Text>
@@ -444,7 +453,7 @@ export default function AddExpense({ navigation, route }) {
                 ]}
                 onPress={() => dispatch({ type: 'SET_FIELD', field: 'splitType', value: 'equal' })}
               >
-                <Text 
+                <Text
                   style={[
                     styles.splitTypeText,
                     splitType === 'equal' && { color: '#2e7d32', fontWeight: '600' }
@@ -460,7 +469,7 @@ export default function AddExpense({ navigation, route }) {
                 ]}
                 onPress={() => dispatch({ type: 'SET_FIELD', field: 'splitType', value: 'custom' })}
               >
-                <Text 
+                <Text
                   style={[
                     styles.splitTypeText,
                     splitType === 'custom' && { color: '#2e7d32', fontWeight: '600' }
@@ -472,21 +481,21 @@ export default function AddExpense({ navigation, route }) {
             </View>
           </View>
         )}
-        
+
         {selectedGroup && members.length > 0 && (
           <View style={styles.inputContainer}>
             <Text style={styles.sectionTitle}>
-              {splitType === 'equal' 
+              {splitType === 'equal'
                 ? `Each person pays ₹${calculateEqualSplit()}`
                 : 'Enter amounts for each person'}
             </Text>
-            
+
             {members.map((member) => (
               <MemberItem
                 key={member.id}
                 member={member}
-                amount={splitType === 'equal' 
-                  ? calculateEqualSplit() 
+                amount={splitType === 'equal'
+                  ? calculateEqualSplit()
                   : customAmounts[member.id] || ''}
                 onAmountChange={handleAmountChange}
                 onToggle={toggleMember}
@@ -495,7 +504,7 @@ export default function AddExpense({ navigation, route }) {
             ))}
           </View>
         )}
-        
+
         <TouchableOpacity
           style={[styles.saveButton, isSubmitting && { opacity: 0.7 }]}
           onPress={submit}
@@ -510,7 +519,7 @@ export default function AddExpense({ navigation, route }) {
           )}
         </TouchableOpacity>
       </ScrollView>
-      
+
       <Modal
         visible={showGroupPicker}
         transparent
@@ -525,12 +534,12 @@ export default function AddExpense({ navigation, route }) {
                 <Ionicons name="close" size={24} color="#6c757d" />
               </TouchableOpacity>
             </View>
-            
+
             <FlatList
               data={groups}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[
                     styles.groupItem,
                     selectedGroup?.id === item.id && styles.groupItemSelected

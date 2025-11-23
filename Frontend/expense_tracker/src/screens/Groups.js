@@ -21,7 +21,7 @@ import { AuthContext } from "../context/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const MemberItem = ({ user, selected, onToggle }) => (
-  <TouchableOpacity 
+  <TouchableOpacity
     style={[styles.memberItem, selected && styles.memberItemSelected]}
     onPress={() => onToggle(user.id)}
   >
@@ -167,7 +167,19 @@ const styles = StyleSheet.create({
 export default function Groups({ navigation }) {
   const { user } = useContext(AuthContext);
   const [groups, setGroups] = useState([]);
-  const [allUsers, setAllUsers] = useState([]);
+
+  // Contacts state
+  const [contacts, setContacts] = useState([]);
+  const [searchText, setSearchText] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+
+  // Add Contact state
+  const [showAddContact, setShowAddContact] = useState(false);
+  const [newContactEmail, setNewContactEmail] = useState("");
+  const [addingContact, setAddingContact] = useState(false);
+
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState("");
   const [selectedMembers, setSelectedMembers] = useState([]);
@@ -179,26 +191,87 @@ export default function Groups({ navigation }) {
     try {
       const groupsRes = await api.get("/groups");
       setGroups(groupsRes.data || []);
-      
-      const usersRes = await api.get("/users");
-      setAllUsers(usersRes.data.filter(u => u.id !== user?.id) || []);
     } catch (error) {
-      console.error('Error loading data:', error);
-      Alert.alert('Error', 'Failed to load data');
+      console.error('Error loading groups:', error);
+      Alert.alert('Error', 'Failed to load groups');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadGroups();
+  const loadContacts = async (reset = false) => {
+    if (loadingContacts) return;
+    if (!reset && !hasMore) return;
+
+    setLoadingContacts(true);
+    try {
+      const currentPage = reset ? 1 : page;
+      const res = await api.get("/contacts", {
+        params: {
+          search: searchText,
+          page: currentPage,
+          limit: 20
+        }
+      });
+
+      const newContacts = res.data.data;
+      const pagination = res.data.pagination;
+
+      if (reset) {
+        setContacts(newContacts);
+      } else {
+        setContacts(prev => [...prev, ...newContacts]);
+      }
+
+      setHasMore(newContacts.length === pagination.limit);
+      setPage(currentPage + 1);
+    } catch (error) {
+      console.error('Error loading contacts:', error);
+    } finally {
+      setLoadingContacts(false);
+    }
   };
 
   useEffect(() => {
     loadGroups();
   }, []);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (showModal) {
+        setPage(1);
+        setHasMore(true);
+        loadContacts(true);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchText, showModal]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadGroups();
+  };
+
+  const handleAddContact = async () => {
+    if (!newContactEmail.trim()) return;
+    setAddingContact(true);
+    try {
+      await api.post("/contacts", { email: newContactEmail.trim() });
+      setNewContactEmail("");
+      setShowAddContact(false);
+      Alert.alert("Success", "Contact added successfully");
+      // Reload contacts
+      setPage(1);
+      setHasMore(true);
+      loadContacts(true);
+    } catch (error) {
+      Alert.alert("Error", error.response?.data?.error || "Failed to add contact");
+    } finally {
+      setAddingContact(false);
+    }
+  };
 
   const handleCreateGroup = async () => {
     if (!name.trim()) {
@@ -215,17 +288,17 @@ export default function Groups({ navigation }) {
     try {
       const groupData = {
         name: name.trim(),
-        members: [...selectedMembers, user.id] 
+        members: [...selectedMembers, user.id].map(id => Number(id))
       };
-      
+
       const response = await api.post("/groups", groupData);
-      
+
       setName("");
       setSelectedMembers([]);
       setShowModal(false);
-      
+
       await loadGroups();
-      
+
       navigation.navigate('GroupDetails', { groupId: response.data.id });
     } catch (error) {
       console.error('Error creating group:', error);
@@ -234,9 +307,9 @@ export default function Groups({ navigation }) {
       setIsCreating(false);
     }
   };
-  
+
   const toggleMember = (userId) => {
-    setSelectedMembers(prev => 
+    setSelectedMembers(prev =>
       prev.includes(userId)
         ? prev.filter(id => id !== userId)
         : [...prev, userId]
@@ -244,12 +317,12 @@ export default function Groups({ navigation }) {
   };
 
   const renderGroupItem = ({ item }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.groupCard}
       onPress={() => {
-        navigation.navigate('GroupDetails', { 
+        navigation.navigate('GroupDetails', {
           groupId: item.id,
-          groupName: item.name 
+          groupName: item.name
         });
       }}
     >
@@ -260,17 +333,17 @@ export default function Groups({ navigation }) {
             {item.members?.length || 0} {item.members?.length === 1 ? 'member' : 'members'}
           </Text>
         </View>
-        
+
         {item.recentExpense && (
           <Text style={{ color: '#6c757d', fontSize: 14, marginTop: 4 }}>
             Last expense: {item.recentExpense}
           </Text>
         )}
-        
+
         {item.members && item.members.length > 0 && (
           <View style={{ marginTop: 8, flexDirection: 'row', flexWrap: 'wrap' }}>
             {item.members.slice(0, 4).map((member, index) => (
-              <View key={index} style={[styles.avatar, { 
+              <View key={index} style={[styles.avatar, {
                 marginLeft: index > 0 ? -10 : 0,
                 borderWidth: 2,
                 borderColor: '#fff',
@@ -282,7 +355,7 @@ export default function Groups({ navigation }) {
               </View>
             ))}
             {item.members.length > 4 && (
-              <View style={[styles.avatar, { 
+              <View style={[styles.avatar, {
                 backgroundColor: '#e0e0e0',
                 marginLeft: -10,
                 zIndex: 5,
@@ -368,37 +441,80 @@ export default function Groups({ navigation }) {
                   <Ionicons name="close" size={24} color="#6c757d" />
                 </TouchableOpacity>
               </View>
-              
+
               <Text style={styles.sectionTitle}>Group Name</Text>
               <TextInput
                 placeholder="e.g., Roommates, Trip to Bali"
                 value={name}
                 onChangeText={setName}
                 style={[styles.input, { marginBottom: 24 }]}
-                autoFocus
                 returnKeyType="next"
-                onSubmitEditing={Keyboard.dismiss}
               />
-              
-              <Text style={styles.sectionTitle}>Add Members</Text>
-              <View style={{ maxHeight: 300, marginBottom: 24 }}>
-                <ScrollView>
-                  {allUsers.map(user => (
+
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <Text style={styles.sectionTitle}>Add Members</Text>
+                <TouchableOpacity onPress={() => setShowAddContact(!showAddContact)}>
+                  <Text style={{ color: '#2e7d32', fontWeight: '600' }}>
+                    {showAddContact ? 'Cancel' : '+ Add Contact'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {showAddContact && (
+                <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+                  <TextInput
+                    placeholder="Enter email address"
+                    value={newContactEmail}
+                    onChangeText={setNewContactEmail}
+                    style={[styles.input, { flex: 1, marginBottom: 0, marginRight: 8 }]}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
+                  <TouchableOpacity
+                    style={[styles.addButton, { paddingHorizontal: 16 }]}
+                    onPress={handleAddContact}
+                    disabled={addingContact}
+                  >
+                    {addingContact ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <Ionicons name="add" size={24} color="#fff" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              <TextInput
+                placeholder="Search contacts..."
+                value={searchText}
+                onChangeText={setSearchText}
+                style={[styles.input, { marginBottom: 8 }]}
+              />
+
+              <View style={{ height: 250, marginBottom: 24 }}>
+                <FlatList
+                  data={contacts}
+                  keyExtractor={(item) => item.id.toString()}
+                  renderItem={({ item }) => (
                     <MemberItem
-                      key={user.id}
-                      user={user}
-                      selected={selectedMembers.includes(user.id)}
+                      user={item}
+                      selected={selectedMembers.includes(item.id)}
                       onToggle={toggleMember}
                     />
-                  ))}
-                  {allUsers.length === 0 && (
-                    <Text style={{ textAlign: 'center', color: '#6c757d', marginTop: 16 }}>
-                      No contacts found
-                    </Text>
                   )}
-                </ScrollView>
+                  onEndReached={() => loadContacts()}
+                  onEndReachedThreshold={0.5}
+                  ListFooterComponent={loadingContacts && <ActivityIndicator size="small" color="#2e7d32" />}
+                  ListEmptyComponent={
+                    !loadingContacts && (
+                      <Text style={{ textAlign: 'center', color: '#6c757d', marginTop: 16 }}>
+                        {searchText ? 'No contacts found' : 'No contacts yet. Add someone!'}
+                      </Text>
+                    )
+                  }
+                />
               </View>
-              
+
               <View style={[styles.buttonRow, { marginTop: 'auto' }]}>
                 <TouchableOpacity
                   onPress={() => setShowModal(false)}

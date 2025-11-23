@@ -7,8 +7,14 @@ const prisma = new PrismaClient();
 const router = Router();
 
 router.get("/", auth, async (req, res) => {
+  const userId = req.user.id;
   const items = await prisma.expense.findMany({
-    where: { paidBy: req.user.id },
+    where: {
+      OR: [
+        { paidBy: userId },
+        { splits: { some: { userId } } },
+      ],
+    },
     include: { splits: true },
     orderBy: { createdAt: "desc" },
   });
@@ -23,37 +29,22 @@ router.post(
   body("type").isLength({ min: 1 }),
   body("date").isISO8601(),
   body("paid_by").isInt(),
-  body("split_with").isArray({ min: 1 }),
-  body("split_type").isIn(["equal", "custom"]),
+  body("splits").isArray({ min: 1 }),
+  body("group_id").optional({ nullable: true }).isInt(),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty())
       return res.status(400).json({ errors: errors.array() });
-    const { title, amount, type, date, paid_by, split_with, split_type } =
-      req.body;
+    const { title, amount, type, date, paid_by, splits, group_id } = req.body;
+
     if (paid_by !== req.user.id)
       return res.status(403).json({ error: "Forbidden" });
 
-    let splits = [];
-    if (split_type === "equal") {
-      const people = split_with.length + 1;
-      const share = Number(amount) / people;
-      const users = [paid_by, ...split_with];
-      splits = users.map((uid) => ({ userId: uid, shareAmount: share }));
-    } else {
-      splits = split_with.map((s) => ({
-        userId: s.userId,
-        shareAmount: Number(s.shareAmount),
-      }));
-      const totalShares = splits.reduce((a, b) => a + b.shareAmount, 0);
-      if (Math.abs(totalShares - Number(amount)) > 0.01) {
-        return res
-          .status(400)
-          .json({ error: "Custom shares must sum to total amount" });
-      }
-      if (!splits.find((s) => s.userId === paid_by)) {
-        splits.push({ userId: paid_by, shareAmount: 0 });
-      }
+    const totalShares = splits.reduce((a, b) => a + Number(b.amount), 0);
+    if (Math.abs(totalShares - Number(amount)) > 0.05) { // Allow small float error
+      return res
+        .status(400)
+        .json({ error: "Splits must sum to total amount" });
     }
 
     const created = await prisma.expense.create({
@@ -63,10 +54,11 @@ router.post(
         type,
         date: new Date(date),
         paidBy: paid_by,
+        groupId: group_id || null,
         splits: {
           create: splits.map((s) => ({
-            userId: s.userId,
-            shareAmount: s.shareAmount,
+            userId: s.user_id,
+            shareAmount: Number(s.amount),
           })),
         },
       },
@@ -75,6 +67,21 @@ router.post(
     res.status(201).json(created);
   }
 );
+
+router.get("/:id", auth, async (req, res) => {
+  const id = parseInt(req.params.id);
+  const expense = await prisma.expense.findUnique({
+    where: { id },
+    include: { splits: true },
+  });
+  if (!expense) return res.status(404).json({ error: "Not found" });
+
+  // Check access
+  const hasAccess = expense.paidBy === req.user.id || expense.splits.some(s => s.userId === req.user.id);
+  if (!hasAccess) return res.status(403).json({ error: "Forbidden" });
+
+  res.json(expense);
+});
 
 router.put("/:id", auth, async (req, res) => {
   const id = parseInt(req.params.id);
