@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
   View,
   Text,
@@ -11,9 +11,12 @@ import {
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import api from "../services/api";
+import { ThemeContext } from "../context/ThemeContext";
 
 
 export default function Expenses({ navigation }) {
+  const { theme } = useContext(ThemeContext);
+  const { colors } = theme;
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -47,36 +50,36 @@ export default function Expenses({ navigation }) {
 
   const renderExpenseItem = ({ item }) => (
     <TouchableOpacity
-      style={styles.expenseCard}
+      style={[styles.expenseCard, { backgroundColor: colors.card }]}
       onPress={() => navigation.navigate('ExpenseDetail', { expenseId: item.id })}
     >
-      <Text style={styles.expenseTitle}>{item.title}</Text>
+      <Text style={[styles.expenseTitle, { color: colors.text }]}>{item.title}</Text>
 
       <View style={styles.expenseDetail}>
-        <Text style={styles.amount}>₹{parseFloat(item.amount).toFixed(2)}</Text>
-        <Text style={{ color: '#6c757d' }}>{item.type}</Text>
+        <Text style={[styles.amount, { color: colors.primary }]}>₹{parseFloat(item.amount).toFixed(2)}</Text>
+        <Text style={{ color: colors.subText }}>{item.type}</Text>
       </View>
 
       <View style={styles.expenseDetail}>
-        <Text style={{ color: '#6c757d' }}>
+        <Text style={{ color: colors.subText }}>
           {new Date(item.date).toLocaleDateString('en-IN', {
             day: 'numeric',
             month: 'short',
             year: 'numeric'
           })}
         </Text>
-        <Text style={{ color: item.paid_by === 'you' ? '#2e7d32' : '#dc3545' }}>
+        <Text style={{ color: item.paid_by === 'you' ? colors.primary : colors.danger }}>
           {item.paid_by === 'you' ? 'You paid' : 'You owe'}
         </Text>
       </View>
 
       {item.splits?.length > 0 && (
-        <View style={{ marginTop: 12, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#e9ecef' }}>
-          <Text style={{ color: '#6c757d', marginBottom: 4 }}>Splits:</Text>
+        <View style={{ marginTop: 12, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
+          <Text style={{ color: colors.subText, marginBottom: 4 }}>Splits:</Text>
           {item.splits.map((split, index) => (
             <View key={split.id || index} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text>{split.user ? split.user.name : (split.groupMember ? split.groupMember.name : `User ${split.userId}`)}</Text>
-              <Text>₹{parseFloat(split.shareAmount || 0).toFixed(2)}</Text>
+              <Text style={{ color: colors.text }}>{split.user ? split.user.name : (split.groupMember ? split.groupMember.name : `User ${split.userId}`)}</Text>
+              <Text style={{ color: colors.text }}>₹{parseFloat(split.shareAmount || 0).toFixed(2)}</Text>
             </View>
           ))}
         </View>
@@ -86,18 +89,18 @@ export default function Expenses({ navigation }) {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2e7d32" />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Expenses</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.primary }]}>Expenses</Text>
         <TouchableOpacity
-          style={styles.addButton}
+          style={[styles.addButton, { backgroundColor: colors.primary }]}
           onPress={() => navigation.navigate("AddExpense")}
         >
           <Ionicons name="add" size={20} color="white" />
@@ -107,9 +110,9 @@ export default function Expenses({ navigation }) {
 
       {items.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="receipt-outline" size={64} color="#e9ecef" />
-          <Text style={styles.emptyText}>No expenses yet</Text>
-          <Text style={[styles.emptyText, { marginTop: 8 }]}>
+          <Ionicons name="receipt-outline" size={64} color={colors.subText} />
+          <Text style={[styles.emptyText, { color: colors.subText }]}>No expenses yet</Text>
+          <Text style={[styles.emptyText, { marginTop: 8, color: colors.subText }]}>
             Tap the + button to add your first expense
           </Text>
         </View>
@@ -123,8 +126,8 @@ export default function Expenses({ navigation }) {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={['#2e7d32']}
-              tintColor="#2e7d32"
+              colors={[colors.primary]}
+              tintColor={colors.primary}
             />
           }
         />

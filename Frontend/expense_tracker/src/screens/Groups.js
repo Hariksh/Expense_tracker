@@ -17,6 +17,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
+import { ThemeContext } from "../context/ThemeContext";
 
 const MemberItem = ({ user, selected, onToggle }) => (
   <TouchableOpacity
@@ -78,6 +79,8 @@ function reducer(state, action) {
 
 export default function Groups({ navigation }) {
   const { user } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
+  const { colors } = theme;
   const [state, dispatch] = useReducer(reducer, initialState);
   const {
     groups,
@@ -171,7 +174,7 @@ export default function Groups({ navigation }) {
 
   const renderGroupItem = ({ item }) => (
     <TouchableOpacity
-      style={styles.groupCard}
+      style={[styles.groupCard, { backgroundColor: colors.card }]}
       onPress={() => {
         navigation.navigate('GroupDetails', {
           groupId: item.id,
@@ -181,21 +184,21 @@ export default function Groups({ navigation }) {
     >
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={styles.groupName}>{item.name}</Text>
-          <Text style={styles.memberCount}>
+          <Text style={[styles.groupName, { color: colors.text }]}>{item.name}</Text>
+          <Text style={[styles.memberCount, { color: colors.subText }]}>
             {item.members?.length || 0} {item.members?.length === 1 ? 'member' : 'members'}
           </Text>
         </View>
 
         {item.recentExpense && (
-          <Text style={{ color: '#6c757d', fontSize: 14, marginTop: 4 }}>
+          <Text style={{ color: colors.subText, fontSize: 14, marginTop: 4 }}>
             Last expense: {item.recentExpense}
           </Text>
         )}
 
         {item.members && item.members.length > 0 && (
           <View style={{ marginTop: 8 }}>
-            <Text style={{ color: '#6c757d', fontSize: 14 }} numberOfLines={1}>
+            <Text style={{ color: colors.subText, fontSize: 14 }} numberOfLines={1}>
               {item.members.map(m => m.user ? m.user.name : m.name).join(', ')}
             </Text>
           </View>
@@ -206,18 +209,18 @@ export default function Groups({ navigation }) {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2e7d32" />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Groups</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.primary }]}>Groups</Text>
         <TouchableOpacity
-          style={styles.addButton}
+          style={[styles.addButton, { backgroundColor: colors.primary }]}
           onPress={() => dispatch({ type: 'SET_FIELD', field: 'showModal', value: true })}
         >
           <Ionicons name="people" size={20} color="white" />
@@ -227,13 +230,13 @@ export default function Groups({ navigation }) {
 
       {groups.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="people-outline" size={64} color="#e9ecef" />
-          <Text style={styles.emptyText}>No groups yet</Text>
-          <Text style={[styles.emptyText, { marginTop: 8 }]}>
+          <Ionicons name="people-outline" size={64} color={colors.subText} />
+          <Text style={[styles.emptyText, { color: colors.subText }]}>No groups yet</Text>
+          <Text style={[styles.emptyText, { marginTop: 8, color: colors.subText }]}>
             Create your first group to start splitting expenses
           </Text>
           <TouchableOpacity
-            style={[styles.addButton, { marginTop: 20, paddingHorizontal: 20 }]}
+            style={[styles.addButton, { marginTop: 20, paddingHorizontal: 20, backgroundColor: colors.primary }]}
             onPress={() => dispatch({ type: 'SET_FIELD', field: 'showModal', value: true })}
           >
             <Ionicons name="add" size={20} color="white" />
@@ -250,8 +253,8 @@ export default function Groups({ navigation }) {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={['#2e7d32']}
-              tintColor="#2e7d32"
+              colors={[colors.primary]}
+              tintColor={colors.primary}
             />
           }
         />
@@ -265,36 +268,38 @@ export default function Groups({ navigation }) {
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
+            <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <Text style={styles.modalTitle}>Create New Group</Text>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Create New Group</Text>
                 <TouchableOpacity onPress={() => dispatch({ type: 'SET_FIELD', field: 'showModal', value: false })}>
-                  <Ionicons name="close" size={24} color="#6c757d" />
+                  <Ionicons name="close" size={24} color={colors.subText} />
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.sectionTitle}>Group Name</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Group Name</Text>
               <TextInput
                 placeholder="e.g., Roommates, Trip to Bali"
+                placeholderTextColor={colors.subText}
                 value={name}
                 onChangeText={(text) => dispatch({ type: 'SET_FIELD', field: 'name', value: text })}
-                style={[styles.input, { marginBottom: 24 }]}
+                style={[styles.input, { marginBottom: 24, backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
                 returnKeyType="next"
               />
 
-              <Text style={styles.sectionTitle}>Add Members</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Add Members</Text>
               <View style={{ flexDirection: 'row', marginBottom: 16 }}>
                 <TextInput
                   placeholder="Member Name"
+                  placeholderTextColor={colors.subText}
                   value={newMemberName}
                   onChangeText={(text) => dispatch({ type: 'SET_FIELD', field: 'newMemberName', value: text })}
-                  style={[styles.input, { flex: 1, marginBottom: 0, marginRight: 8 }]}
+                  style={[styles.input, { flex: 1, marginBottom: 0, marginRight: 8, backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
                   onSubmitEditing={handleAddMember}
                   blurOnSubmit={false}
                   returnKeyType="done"
                 />
                 <TouchableOpacity
-                  style={[styles.addButton, { paddingHorizontal: 16 }]}
+                  style={[styles.addButton, { paddingHorizontal: 16, backgroundColor: colors.primary }]}
                   onPress={handleAddMember}
                 >
                   <Ionicons name="add" size={24} color="#fff" />
@@ -306,22 +311,22 @@ export default function Groups({ navigation }) {
                   data={membersList}
                   keyExtractor={(item, index) => index.toString()}
                   renderItem={({ item, index }) => (
-                    <View style={styles.memberItem}>
+                    <View style={[styles.memberItem, { borderBottomColor: colors.border }]}>
                       <View style={styles.memberInfo}>
-                        <View style={[styles.avatar, { backgroundColor: '#e0e0e0' }]}>
-                          <Text style={[styles.avatarText, { color: '#757575' }]}>
+                        <View style={[styles.avatar, { backgroundColor: colors.background }]}>
+                          <Text style={[styles.avatarText, { color: colors.subText }]}>
                             {item.name.charAt(0).toUpperCase()}
                           </Text>
                         </View>
-                        <Text style={styles.memberName}>{item.name}</Text>
+                        <Text style={[styles.memberName, { color: colors.text }]}>{item.name}</Text>
                       </View>
                       <TouchableOpacity onPress={() => handleRemoveMember(index)}>
-                        <Ionicons name="close-circle" size={24} color="#e53935" />
+                        <Ionicons name="close-circle" size={24} color={colors.danger} />
                       </TouchableOpacity>
                     </View>
                   )}
                   ListEmptyComponent={
-                    <Text style={{ textAlign: 'center', color: '#6c757d', marginTop: 16 }}>
+                    <Text style={{ textAlign: 'center', color: colors.subText, marginTop: 16 }}>
                       No members added yet
                     </Text>
                   }
@@ -334,11 +339,11 @@ export default function Groups({ navigation }) {
                   style={[styles.cancelButton, { flex: 1 }]}
                   disabled={isCreating}
                 >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                  <Text style={[styles.cancelButtonText, { color: colors.subText }]}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleCreateGroup}
-                  style={[styles.createButton, { flex: 1 }]}
+                  style={[styles.createButton, { flex: 1, backgroundColor: colors.primary }]}
                   disabled={!name.trim() || isCreating}
                 >
                   {isCreating ? (

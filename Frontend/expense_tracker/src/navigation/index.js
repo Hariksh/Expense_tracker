@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from '@expo/vector-icons';
 import { AuthContext } from "../context/AuthContext";
+import { ThemeContext } from "../context/ThemeContext";
 import Login from "../screens/Login";
 import Register from "../screens/Register";
 import Expenses from "../screens/Expenses";
@@ -18,15 +19,25 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function MainTabs({ navigation }) {
+  const { theme } = useContext(ThemeContext);
+  const { colors } = theme;
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: {
+          height: 70,
+          paddingTop: 8,
+          paddingBottom: 8,
+          backgroundColor: colors.card,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+        },
         tabBarLabelStyle: styles.tabBarLabel,
         tabBarIconStyle: styles.tabBarIcon,
-        tabBarActiveTintColor: '#2e7d32',
-        tabBarInactiveTintColor: '#95a5a6',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.subText,
       })}
     >
       <Tab.Screen
@@ -44,11 +55,11 @@ function MainTabs({ navigation }) {
       />
       <Tab.Screen
         name="AddExpenseTab"
-        component={View} 
+        component={View}
         options={{
           tabBarButton: () => (
             <TouchableOpacity
-              style={styles.addButton}
+              style={[styles.addButton, { backgroundColor: colors.primary }]}
               onPress={() => navigation.navigate('AddExpense')}
             >
               <Text style={styles.addButtonText}>+</Text>

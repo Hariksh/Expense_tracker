@@ -68,6 +68,29 @@ export default function GroupDetails({ navigation, route }) {
         }
     };
 
+    const handleDeleteGroup = () => {
+        Alert.alert(
+            "Delete Group",
+            "Are you sure you want to delete this group? This action cannot be undone and will delete all expenses and members in this group.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await api.delete(`/groups/${groupId}`);
+                            navigation.goBack();
+                        } catch (error) {
+                            console.error('Error deleting group:', error);
+                            Alert.alert('Error', 'Failed to delete group');
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
     const renderExpenseItem = ({ item }) => (
         <TouchableOpacity
             style={styles.expenseItem}
@@ -161,6 +184,18 @@ export default function GroupDetails({ navigation, route }) {
                     }
                 />
             </View>
+
+            {group.createdBy === user.id && (
+                <View style={{ padding: 16 }}>
+                    <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={handleDeleteGroup}
+                    >
+                        <Ionicons name="trash-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+                        <Text style={styles.deleteButtonText}>Delete Group</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
 
             {
                 addMemberModalVisible && (
@@ -381,5 +416,20 @@ const styles = StyleSheet.create({
     addButtonText: {
         color: '#fff',
         fontWeight: '600',
+    },
+    deleteButton: {
+        backgroundColor: '#ffebee',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
+        borderRadius: 12,
+        backgroundColor: '#dc3545',
+        marginBottom: 20,
+    },
+    deleteButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 16,
     },
 });

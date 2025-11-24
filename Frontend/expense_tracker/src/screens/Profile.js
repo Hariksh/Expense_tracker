@@ -8,15 +8,20 @@ import {
   ScrollView,
   Image,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Switch
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { AuthContext } from "../context/AuthContext";
+import { ThemeContext } from "../context/ThemeContext";
 import api from "../services/api";
 
 
 export default function Profile({ navigation }) {
   const { user, logout } = useContext(AuthContext);
+  const { theme, toggleTheme, isDark } = useContext(ThemeContext);
+  const { colors } = theme;
+
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -64,10 +69,10 @@ export default function Profile({ navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView>
-        <View style={styles.header}>
-          <View style={styles.avatar}>
+        <View style={[styles.header, { backgroundColor: colors.header }]}>
+          <View style={[styles.avatar, { backgroundColor: isDark ? '#333' : '#e0e0e0', borderColor: colors.card }]}>
             <Text style={styles.avatarText}>{getInitials(user?.name)}</Text>
           </View>
           <Text style={styles.name}>{user?.name || 'User'}</Text>
@@ -76,37 +81,37 @@ export default function Profile({ navigation }) {
 
         <View style={styles.content}>
           <View style={styles.statsContainer}>
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>{stats?.totalExpenses || 0}</Text>
-              <Text style={styles.statLabel}>Expenses</Text>
+            <View style={[styles.statBox, { backgroundColor: colors.card }]}>
+              <Text style={[styles.statValue, { color: colors.primary }]}>{stats?.totalExpenses || 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.subText }]}>Expenses</Text>
             </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>{stats?.totalGroups || 0}</Text>
-              <Text style={styles.statLabel}>Groups</Text>
+            <View style={[styles.statBox, { backgroundColor: colors.card }]}>
+              <Text style={[styles.statValue, { color: colors.primary }]}>{stats?.totalGroups || 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.subText }]}>Groups</Text>
             </View>
-            <View style={styles.statBox}>
-              <Text style={[styles.statValue, { color: '#2e7d32' }]}>₹{stats?.totalPaid?.toFixed(2) || '0.00'}</Text>
-              <Text style={styles.statLabel}>You Paid</Text>
+            <View style={[styles.statBox, { backgroundColor: colors.card }]}>
+              <Text style={[styles.statValue, { color: colors.primary }]}>₹{stats?.totalPaid?.toFixed(2) || '0.00'}</Text>
+              <Text style={[styles.statLabel, { color: colors.subText }]}>You Paid</Text>
             </View>
-            <View style={styles.statBox}>
-              <Text style={[styles.statValue, { color: '#e53935' }]}>₹{stats?.totalOwed?.toFixed(2) || '0.00'}</Text>
-              <Text style={styles.statLabel}>You Owe</Text>
+            <View style={[styles.statBox, { backgroundColor: colors.card }]}>
+              <Text style={[styles.statValue, { color: colors.danger }]}>₹{stats?.totalOwed?.toFixed(2) || '0.00'}</Text>
+              <Text style={[styles.statLabel, { color: colors.subText }]}>You Owe</Text>
             </View>
           </View>
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Account Information</Text>
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
+            <Text style={[styles.cardTitle, { color: colors.text, borderBottomColor: colors.border }]}>Account Information</Text>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Name</Text>
-              <Text style={styles.infoValue}>{user?.name || 'N/A'}</Text>
+              <Text style={[styles.infoLabel, { color: colors.subText }]}>Name</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>{user?.name || 'N/A'}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>{user?.email || 'N/A'}</Text>
+              <Text style={[styles.infoLabel, { color: colors.subText }]}>Email</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>{user?.email || 'N/A'}</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Member Since</Text>
-              <Text style={styles.infoValue}>
+              <Text style={[styles.infoLabel, { color: colors.subText }]}>Member Since</Text>
+              <Text style={[styles.infoValue, { color: colors.text }]}>
                 {user?.createdAt
                   ? new Date(user.createdAt).toLocaleDateString()
                   : 'N/A'}
@@ -114,33 +119,25 @@ export default function Profile({ navigation }) {
             </View>
           </View>
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Settings</Text>
-            <TouchableOpacity
-              style={{ paddingVertical: 12, flexDirection: 'row', alignItems: 'center' }}
-              onPress={() => { }}
-            >
-              <Ionicons name="notifications-outline" size={20} color="#6c757d" />
-              <Text style={{ marginLeft: 12, color: '#2c3e50' }}>Notifications</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={{ paddingVertical: 12, flexDirection: 'row', alignItems: 'center' }}
-              onPress={() => { }}
-            >
-              <Ionicons name="lock-closed-outline" size={20} color="#6c757d" />
-              <Text style={{ marginLeft: 12, color: '#2c3e50' }}>Change Password</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={{ paddingVertical: 12, flexDirection: 'row', alignItems: 'center' }}
-              onPress={() => { }}
-            >
-              <Ionicons name="help-circle-outline" size={20} color="#6c757d" />
-              <Text style={{ marginLeft: 12, color: '#2c3e50' }}>Help & Support</Text>
-            </TouchableOpacity>
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
+            <Text style={[styles.cardTitle, { color: colors.text, borderBottomColor: colors.border }]}>Settings</Text>
+            <View style={{ paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name={isDark ? "moon" : "moon-outline"} size={22} color={isDark ? colors.primary : colors.subText} />
+                <Text style={{ marginLeft: 12, color: colors.text, fontSize: 16 }}>Dark Mode</Text>
+              </View>
+              <Switch
+                value={isDark}
+                onValueChange={toggleTheme}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor={isDark ? "#fff" : "#f4f3f4"}
+                ios_backgroundColor={colors.border}
+              />
+            </View>
           </View>
 
           <TouchableOpacity
-            style={styles.logoutButton}
+            style={[styles.logoutButton, { backgroundColor: colors.danger }]}
             onPress={handleLogout}
           >
             <Ionicons name="log-out-outline" size={20} color="#fff" />
@@ -149,7 +146,7 @@ export default function Profile({ navigation }) {
 
           <Text style={{
             textAlign: 'center',
-            color: '#adb5bd',
+            color: colors.subText,
             marginTop: 24,
             marginBottom: 16,
             fontSize: 12
@@ -165,12 +162,10 @@ export default function Profile({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
   },
   header: {
     padding: 20,
     alignItems: "center",
-    backgroundColor: "#2e7d32",
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     paddingBottom: 30,
@@ -179,12 +174,10 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: "#e0e0e0",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
     borderWidth: 3,
-    borderColor: "#fff",
   },
   avatarText: {
     fontSize: 40,
@@ -207,7 +200,6 @@ const styles = StyleSheet.create({
     marginTop: -20,
   },
   card: {
-    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -220,10 +212,8 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#2c3e50",
     marginBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
     paddingBottom: 8,
   },
   infoRow: {
@@ -233,15 +223,12 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    color: "#6c757d",
   },
   infoValue: {
     fontSize: 16,
-    color: "#2c3e50",
     fontWeight: "500",
   },
   logoutButton: {
-    backgroundColor: "#e53935",
     padding: 16,
     borderRadius: 10,
     alignItems: "center",
@@ -261,7 +248,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   statBox: {
-    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
@@ -276,12 +262,10 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#2e7d32",
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: "#6c757d",
     textAlign: "center",
   },
   loadingContainer: {

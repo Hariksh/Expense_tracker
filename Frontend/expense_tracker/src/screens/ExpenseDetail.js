@@ -12,10 +12,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
+import { ThemeContext } from "../context/ThemeContext";
 
 export default function ExpenseDetail({ navigation, route }) {
     const { expenseId } = route.params;
     const { user } = useContext(AuthContext);
+    const { theme } = useContext(ThemeContext);
+    const { colors } = theme;
     const [expense, setExpense] = useState(null);
     const [loading, setLoading] = useState(true);
     const [deleting, setDeleting] = useState(false);
@@ -67,8 +70,8 @@ export default function ExpenseDetail({ navigation, route }) {
 
     if (loading) {
         return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#2e7d32" />
+            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+                <ActivityIndicator size="large" color={colors.primary} />
             </View>
         );
     }
@@ -78,25 +81,25 @@ export default function ExpenseDetail({ navigation, route }) {
     const isPayer = expense.paidBy === user.id;
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+            <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Ionicons name="arrow-back" size={24} color="#2c3e50" />
+                    <Ionicons name="arrow-back" size={24} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Expense Details</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>Expense Details</Text>
                 {isPayer ? (
                     <View style={{ flexDirection: 'row' }}>
                         <TouchableOpacity
                             onPress={() => navigation.navigate('AddExpense', { expenseId: expense.id, isEditing: true })}
                             style={{ marginRight: 16 }}
                         >
-                            <Ionicons name="create-outline" size={24} color="#2e7d32" />
+                            <Ionicons name="create-outline" size={24} color={colors.primary} />
                         </TouchableOpacity>
                         <TouchableOpacity onPress={handleDelete} disabled={deleting}>
                             {deleting ? (
-                                <ActivityIndicator size="small" color="#e53935" />
+                                <ActivityIndicator size="small" color={colors.danger} />
                             ) : (
-                                <Ionicons name="trash-outline" size={24} color="#e53935" />
+                                <Ionicons name="trash-outline" size={24} color={colors.danger} />
                             )}
                         </TouchableOpacity>
                     </View>
@@ -106,10 +109,10 @@ export default function ExpenseDetail({ navigation, route }) {
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
-                <View style={styles.card}>
-                    <Text style={styles.title}>{expense.title}</Text>
-                    <Text style={styles.amount}>₹{parseFloat(expense.amount).toFixed(2)}</Text>
-                    <Text style={styles.date}>
+                <View style={[styles.card, { backgroundColor: colors.card }]}>
+                    <Text style={[styles.title, { color: colors.text }]}>{expense.title}</Text>
+                    <Text style={[styles.amount, { color: colors.primary }]}>₹{parseFloat(expense.amount).toFixed(2)}</Text>
+                    <Text style={[styles.date, { color: colors.subText }]}>
                         {new Date(expense.date).toLocaleDateString('en-IN', {
                             weekday: 'long',
                             year: 'numeric',
@@ -117,41 +120,41 @@ export default function ExpenseDetail({ navigation, route }) {
                             day: 'numeric',
                         })}
                     </Text>
-                    <View style={styles.badge}>
-                        <Text style={styles.badgeText}>{expense.type}</Text>
+                    <View style={[styles.badge, { backgroundColor: colors.background }]}>
+                        <Text style={[styles.badgeText, { color: colors.primary }]}>{expense.type}</Text>
                     </View>
                 </View>
 
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Paid By</Text>
-                    <View style={styles.userRow}>
-                        <View style={styles.avatar}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Paid By</Text>
+                    <View style={[styles.userRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                        <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
                             <Text style={styles.avatarText}>
                                 {isPayer ? "Y" : "U"}
                             </Text>
                         </View>
-                        <Text style={styles.userName}>
+                        <Text style={[styles.userName, { color: colors.text }]}>
                             {isPayer ? "You" : `User ${expense.paidBy}`}
                         </Text>
-                        <Text style={styles.userAmount}>
+                        <Text style={[styles.userAmount, { color: colors.text }]}>
                             ₹{parseFloat(expense.amount).toFixed(2)}
                         </Text>
                     </View>
                 </View>
 
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Split With</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Split With</Text>
                     {expense.splits.map((split) => (
-                        <View key={split.id} style={styles.userRow}>
-                            <View style={[styles.avatar, { backgroundColor: '#e0e0e0' }]}>
-                                <Text style={[styles.avatarText, { color: '#757575' }]}>
+                        <View key={split.id} style={[styles.userRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                            <View style={[styles.avatar, { backgroundColor: colors.background }]}>
+                                <Text style={[styles.avatarText, { color: colors.subText }]}>
                                     {split.user ? split.user.name.charAt(0).toUpperCase() : (split.groupMember?.name ? split.groupMember.name.charAt(0).toUpperCase() : 'U')}
                                 </Text>
                             </View>
-                            <Text style={styles.userName}>
+                            <Text style={[styles.userName, { color: colors.text }]}>
                                 {split.userId === user.id ? "You" : (split.user ? split.user.name : (split.groupMember?.name || `User ${split.userId || ''}`))}
                             </Text>
-                            <Text style={styles.userAmount}>
+                            <Text style={[styles.userAmount, { color: colors.text }]}>
                                 ₹{parseFloat(split.shareAmount).toFixed(2)}
                             </Text>
                         </View>

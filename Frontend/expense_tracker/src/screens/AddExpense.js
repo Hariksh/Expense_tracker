@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from "react";
+import React, { useEffect, useReducer, useContext } from "react";
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../services/api";
+import { ThemeContext } from "../context/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
@@ -114,8 +115,8 @@ const MemberItem = ({
           {member.user
             ? member.user.name.charAt(0).toUpperCase()
             : member.name
-            ? member.name.charAt(0).toUpperCase()
-            : "U"}
+              ? member.name.charAt(0).toUpperCase()
+              : "U"}
         </Text>
       </View>
       <Text style={styles.memberName}>
@@ -147,6 +148,8 @@ const MemberItem = ({
 );
 
 export default function AddExpense({ navigation, route }) {
+  const { theme } = useContext(ThemeContext);
+  const { colors } = theme;
   const [state, dispatch] = useReducer(reducer, initialState);
   const {
     title,
@@ -423,7 +426,7 @@ export default function AddExpense({ navigation, route }) {
       Alert.alert(
         "Error",
         error.response?.data?.message ||
-          "Failed to create expense. Please try again."
+        "Failed to create expense. Please try again."
       );
     } finally {
       dispatch({ type: "SET_SUBMITTING", payload: false });
@@ -432,22 +435,22 @@ export default function AddExpense({ navigation, route }) {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2e7d32" />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons name="arrow-back" size={24} color="#2c3e50" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>
+        <Text style={[styles.title, { color: colors.text }]}>
           {route.params?.expenseId ? "Edit Expense" : "Add Expense"}
         </Text>
         <View style={{ width: 40 }} />
@@ -455,9 +458,9 @@ export default function AddExpense({ navigation, route }) {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Group (optional)</Text>
+          <Text style={[styles.label, { color: colors.subText }]}>Group (optional)</Text>
           <TouchableOpacity
-            style={styles.groupSelector}
+            style={[styles.groupSelector, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() =>
               dispatch({
                 type: "SET_FIELD",
@@ -469,8 +472,8 @@ export default function AddExpense({ navigation, route }) {
             <Text
               style={[
                 styles.groupSelectorText,
-                !selectedGroup && styles.groupSelectorPlaceholder,
-                selectedGroup && styles.groupSelectorSelected,
+                !selectedGroup && { color: colors.subText },
+                selectedGroup && { color: colors.text },
               ]}
             >
               {selectedGroup ? selectedGroup.name : "Select a group"}
@@ -478,30 +481,32 @@ export default function AddExpense({ navigation, route }) {
             <Ionicons
               name="chevron-down"
               size={20}
-              color={selectedGroup ? "#2e7d32" : "#95a5a6"}
+              color={selectedGroup ? colors.primary : colors.subText}
             />
           </TouchableOpacity>
         </View>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Title</Text>
+          <Text style={[styles.label, { color: colors.subText }]}>Title</Text>
           <TextInput
             placeholder="e.g., Dinner, Groceries, Movie tickets"
+            placeholderTextColor={colors.subText}
             value={title}
             onChangeText={(value) =>
               dispatch({ type: "SET_FIELD", field: "title", value })
             }
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
             autoCapitalize="words"
           />
         </View>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Amount (₹)</Text>
-          <View style={styles.amountInputContainer}>
-            <Text style={styles.currencySymbol}>₹</Text>
+          <Text style={[styles.label, { color: colors.subText }]}>Amount (₹)</Text>
+          <View style={[styles.amountInputContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.currencySymbol, { color: colors.text }]}>₹</Text>
             <TextInput
               placeholder="0.00"
+              placeholderTextColor={colors.subText}
               value={amount}
               onChangeText={(text) =>
                 dispatch({
@@ -511,21 +516,22 @@ export default function AddExpense({ navigation, route }) {
                 })
               }
               keyboardType="numeric"
-              style={styles.amountInput}
+              style={[styles.amountInput, { color: colors.text }]}
               returnKeyType="next"
             />
           </View>
         </View>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Category</Text>
+          <Text style={[styles.label, { color: colors.subText }]}>Category</Text>
           <View style={styles.typeContainer}>
             {expenseTypes.map((expenseType) => (
               <TouchableOpacity
                 key={expenseType}
                 style={[
                   styles.typeButton,
-                  type === expenseType && styles.typeButtonSelected,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  type === expenseType && { backgroundColor: colors.primary, borderColor: colors.primary },
                 ]}
                 onPress={() =>
                   dispatch({
@@ -538,7 +544,8 @@ export default function AddExpense({ navigation, route }) {
                 <Text
                   style={[
                     styles.typeButtonText,
-                    type === expenseType && styles.typeButtonTextSelected,
+                    { color: colors.subText },
+                    type === expenseType && { color: '#fff' },
                   ]}
                 >
                   {expenseType}
@@ -549,9 +556,9 @@ export default function AddExpense({ navigation, route }) {
         </View>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Date</Text>
+          <Text style={[styles.label, { color: colors.subText }]}>Date</Text>
           <TouchableOpacity
-            style={[styles.input, { justifyContent: "center" }]}
+            style={[styles.input, { justifyContent: "center", backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() =>
               dispatch({
                 type: "SET_FIELD",
@@ -560,7 +567,7 @@ export default function AddExpense({ navigation, route }) {
               })
             }
           >
-            <Text>
+            <Text style={{ color: colors.text }}>
               {date.toLocaleDateString("en-IN", {
                 day: "numeric",
                 month: "long",
@@ -676,7 +683,7 @@ export default function AddExpense({ navigation, route }) {
         )}
 
         <TouchableOpacity
-          style={[styles.saveButton, isSubmitting && { opacity: 0.7 }]}
+          style={[styles.saveButton, { backgroundColor: colors.primary }, isSubmitting && { opacity: 0.7 }]}
           onPress={submit}
           disabled={isSubmitting}
         >
@@ -687,8 +694,8 @@ export default function AddExpense({ navigation, route }) {
               {route.params?.expenseId
                 ? "Update Expense"
                 : selectedGroup
-                ? "Add Expense to Group"
-                : "Add Expense"}
+                  ? "Add Expense to Group"
+                  : "Add Expense"}
             </Text>
           )}
         </TouchableOpacity>
