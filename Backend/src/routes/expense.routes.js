@@ -57,7 +57,8 @@ router.post(
         groupId: group_id || null,
         splits: {
           create: splits.map((s) => ({
-            userId: s.user_id,
+            userId: s.user_id || null,
+            groupMemberId: s.group_member_id || null,
             shareAmount: Number(s.amount),
           })),
         },
@@ -72,7 +73,7 @@ router.get("/:id", auth, async (req, res) => {
   const id = parseInt(req.params.id);
   const expense = await prisma.expense.findUnique({
     where: { id },
-    include: { splits: true },
+    include: { splits: { include: { user: true, groupMember: true } } },
   });
   if (!expense) return res.status(404).json({ error: "Not found" });
 
@@ -88,18 +89,55 @@ router.put("/:id", auth, async (req, res) => {
   const existing = await prisma.expense.findUnique({ where: { id } });
   if (!existing || existing.paidBy !== req.user.id)
     return res.status(404).json({ error: "Not found" });
-  const { title, amount, type, date } = req.body;
-  const updated = await prisma.expense.update({
-    where: { id },
-    data: {
-      title,
-      amount: amount !== undefined ? Number(amount) : undefined,
-      type,
-      date: date ? new Date(date) : undefined,
-    },
-    include: { splits: true },
-  });
-  res.json(updated);
+
+  const { title, amount, type, date, splits, group_id, split_type } = req.body;
+
+  // Validate splits if provided
+  if (splits) {
+    const totalShares = splits.reduce((a, b) => a + Number(b.amount), 0);
+    if (Math.abs(totalShares - Number(amount)) > 0.05) {
+      return res.status(400).json({ error: "Splits must sum to total amount" });
+    }
+  }
+
+  try {
+    const updated = await prisma.$transaction(async (prisma) => {
+      // Update expense details
+      const expense = await prisma.expense.update({
+        where: { id },
+        data: {
+          title,
+          amount: amount !== undefined ? Number(amount) : undefined,
+          type,
+          date: date ? new Date(date) : undefined,
+          groupId: group_id !== undefined ? group_id : undefined,
+        },
+      });
+
+      // If splits are provided, replace them
+      if (splits && splits.length > 0) {
+        await prisma.expenseSplit.deleteMany({ where: { expenseId: id } });
+        await prisma.expenseSplit.createMany({
+          data: splits.map((s) => ({
+            expenseId: id,
+            userId: s.user_id || null,
+            groupMemberId: s.group_member_id || null,
+            shareAmount: Number(s.amount),
+          })),
+        });
+      }
+
+      return prisma.expense.findUnique({
+        where: { id },
+        include: { splits: true },
+      });
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error("Error updating expense:", error);
+    res.status(500).json({ error: "Failed to update expense" });
+  }
 });
 
 router.delete("/:id", auth, async (req, res) => {

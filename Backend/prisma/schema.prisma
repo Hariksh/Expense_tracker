@@ -48,12 +48,14 @@ model Group {
 model GroupMember {
   id      Int @id @default(autoincrement())
   groupId Int
-  userId  Int
+  userId  Int?
+  name    String?
 
   group Group @relation(fields: [groupId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
+  user  User? @relation(fields: [userId], references: [id], map: "GroupMember_userId_fkey_v2")
 
-  @@unique([groupId, userId])
+  splits ExpenseSplit[]
+
   @@index([userId])
 }
 
@@ -76,14 +78,17 @@ model Expense {
 }
 
 model ExpenseSplit {
-  id          Int   @id @default(autoincrement())
-  expenseId   Int
-  userId      Int
-  shareAmount Float
+  id            Int   @id @default(autoincrement())
+  expenseId     Int
+  userId        Int?
+  shareAmount   Float
+  groupMemberId Int?
 
-  expense Expense @relation(fields: [expenseId], references: [id])
-  user    User    @relation(fields: [userId], references: [id])
+  expense     Expense      @relation(fields: [expenseId], references: [id])
+  user        User?        @relation(fields: [userId], references: [id])
+  groupMember GroupMember? @relation(fields: [groupMemberId], references: [id])
 
-  @@unique([expenseId, userId])
+  @@unique([expenseId, userId, groupMemberId])
   @@index([userId])
+  @@index([groupMemberId])
 }

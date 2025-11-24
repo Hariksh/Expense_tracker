@@ -50,42 +50,74 @@ router.post("/", auth, async (req, res) => {
     data: { name, createdBy: req.user.id },
   });
 
-  // Add creator and other members
-  const memberIds = Array.isArray(members) ? members : [req.user.id];
-  // Ensure creator is included
-  if (!memberIds.includes(req.user.id)) {
-    memberIds.push(req.user.id);
+
+  const membersList = Array.isArray(members) ? members : [];
+
+
+  const creatorExists = membersList.some(m => m.userId === req.user.id);
+  if (!creatorExists) {
+    membersList.push({ userId: req.user.id });
   }
 
-  // Deduplicate
-  const uniqueIds = [...new Set(memberIds)];
 
-  await prisma.groupMember.createMany({
-    data: uniqueIds.map((uid) => ({ groupId: created.id, userId: uid })),
-    skipDuplicates: true,
-  });
+  const realUsers = membersList.filter(m => m.userId).map(m => ({ groupId: created.id, userId: m.userId }));
+  const virtualMembers = membersList.filter(m => m.name && !m.userId).map(m => ({ groupId: created.id, name: m.name }));
+
+
+  const uniqueRealUsers = Array.from(new Map(realUsers.map(item => [item.userId, item])).values());
+
+  if (uniqueRealUsers.length > 0) {
+    await prisma.groupMember.createMany({
+      data: uniqueRealUsers,
+      skipDuplicates: true,
+    });
+  }
+
+  if (virtualMembers.length > 0) {
+    await prisma.groupMember.createMany({
+      data: virtualMembers,
+      skipDuplicates: true,
+    });
+  }
 
   res.status(201).json(created);
 });
 
 router.post("/:id/members", auth, async (req, res) => {
   const groupId = parseInt(req.params.id);
-  const { userIds } = req.body;
+  const { members } = req.body;
+
   const grp = await prisma.group.findUnique({ where: { id: groupId } });
   if (!grp) return res.status(404).json({ error: "Group not found" });
   if (grp.createdBy !== req.user.id)
     return res.status(403).json({ error: "Forbidden" });
-  if (!Array.isArray(userIds) || userIds.length === 0)
-    return res.status(400).json({ error: "userIds required" });
-  await prisma.groupMember.createMany({
-    data: userIds.map((uid) => ({ groupId, userId: uid })),
-    skipDuplicates: true,
-  });
-  const members = await prisma.groupMember.findMany({
+
+  if (!Array.isArray(members) || members.length === 0)
+    return res.status(400).json({ error: "members array required" });
+
+
+  const realUsers = members.filter(m => m.userId).map(m => ({ groupId, userId: m.userId }));
+  const virtualMembers = members.filter(m => m.name && !m.userId).map(m => ({ groupId, name: m.name }));
+
+  if (realUsers.length > 0) {
+    await prisma.groupMember.createMany({
+      data: realUsers,
+      skipDuplicates: true,
+    });
+  }
+
+  if (virtualMembers.length > 0) {
+    await prisma.groupMember.createMany({
+      data: virtualMembers,
+      skipDuplicates: true,
+    });
+  }
+
+  const currentMembers = await prisma.groupMember.findMany({
     where: { groupId },
     include: { user: true },
   });
-  res.json({ groupId, members });
+  res.json({ groupId, members: currentMembers });
 });
 
 router.get("/:id/members", auth, async (req, res) => {
@@ -101,8 +133,8 @@ router.get("/:id/members", auth, async (req, res) => {
     return res.status(403).json({ error: "Forbidden" });
   }
 
-  const members = group.members.map(m => m.user);
-  res.json(members);
+
+  res.json(group.members);
 });
 
 module.exports = router;
