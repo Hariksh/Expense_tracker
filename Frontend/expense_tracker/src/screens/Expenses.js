@@ -75,7 +75,7 @@ export default function Expenses({ navigation }) {
           <Text style={{ color: '#6c757d', marginBottom: 4 }}>Splits:</Text>
           {item.splits.map((split, index) => (
             <View key={split.id || index} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text>User {split.userId}</Text>
+              <Text>{split.user ? split.user.name : (split.groupMember ? split.groupMember.name : `User ${split.userId}`)}</Text>
               <Text>₹{parseFloat(split.shareAmount || 0).toFixed(2)}</Text>
             </View>
           ))}
