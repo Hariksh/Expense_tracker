@@ -8,6 +8,8 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Alert,
+    Modal,
+    TextInput,
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import api from "../services/api";
@@ -18,6 +20,9 @@ export default function GroupDetails({ navigation, route }) {
     const { user } = useContext(AuthContext);
     const [group, setGroup] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [addMemberModalVisible, setAddMemberModalVisible] = useState(false);
+    const [newMemberName, setNewMemberName] = useState("");
+    const [addingMember, setAddingMember] = useState(false);
 
     useEffect(() => {
         loadGroup();
@@ -38,6 +43,28 @@ export default function GroupDetails({ navigation, route }) {
             navigation.goBack();
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleAddMember = async () => {
+        if (!newMemberName.trim()) {
+            Alert.alert('Error', 'Please enter a name');
+            return;
+        }
+
+        setAddingMember(true);
+        try {
+            await api.post(`/groups/${groupId}/members`, {
+                members: [{ name: newMemberName.trim() }]
+            });
+            setNewMemberName("");
+            setAddMemberModalVisible(false);
+            loadGroup();
+        } catch (error) {
+            console.error('Error adding member:', error);
+            Alert.alert('Error', 'Failed to add member');
+        } finally {
+            setAddingMember(false);
         }
     };
 
@@ -89,24 +116,33 @@ export default function GroupDetails({ navigation, route }) {
             </View>
 
             <View style={styles.membersSection}>
-                <Text style={styles.sectionTitle}>Members ({group.members.length})</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingRight: 16 }}>
+                    <Text style={styles.sectionTitle}>Members ({group.members.length})</Text>
+                    <TouchableOpacity onPress={() => setAddMemberModalVisible(true)}>
+                        <Text style={{ color: '#2e7d32', fontWeight: '600' }}>+ Add</Text>
+                    </TouchableOpacity>
+                </View>
                 <FlatList
                     data={group.members}
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     keyExtractor={(item) => item.id.toString()}
-                    renderItem={({ item }) => (
-                        <View style={styles.memberItem}>
-                            <View style={styles.avatar}>
-                                <Text style={styles.avatarText}>
-                                    {item.user.name ? item.user.name.charAt(0).toUpperCase() : 'U'}
+                    renderItem={({ item }) => {
+                        const name = item.user ? item.user.name : item.name;
+                        const isMe = item.user && item.user.id === user.id;
+                        return (
+                            <View style={styles.memberItem}>
+                                <View style={styles.avatar}>
+                                    <Text style={styles.avatarText}>
+                                        {name ? name.charAt(0).toUpperCase() : 'U'}
+                                    </Text>
+                                </View>
+                                <Text style={styles.memberName} numberOfLines={1}>
+                                    {isMe ? 'You' : name}
                                 </Text>
                             </View>
-                            <Text style={styles.memberName} numberOfLines={1}>
-                                {item.user.id === user.id ? 'You' : item.user.name}
-                            </Text>
-                        </View>
-                    )}
+                        );
+                    }}
                     contentContainerStyle={{ paddingHorizontal: 16 }}
                 />
             </View>
@@ -125,7 +161,46 @@ export default function GroupDetails({ navigation, route }) {
                     }
                 />
             </View>
-        </SafeAreaView>
+
+            {
+                addMemberModalVisible && (
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>Add Virtual Member</Text>
+                            <Text style={styles.modalSubtitle}>Add a member by name (no account needed)</Text>
+
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Member Name"
+                                value={newMemberName}
+                                onChangeText={setNewMemberName}
+                                autoFocus
+                            />
+
+                            <View style={styles.modalButtons}>
+                                <TouchableOpacity
+                                    style={[styles.modalButton, styles.cancelButton]}
+                                    onPress={() => setAddMemberModalVisible(false)}
+                                >
+                                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.modalButton, styles.addButton]}
+                                    onPress={handleAddMember}
+                                    disabled={addingMember}
+                                >
+                                    {addingMember ? (
+                                        <ActivityIndicator color="#fff" size="small" />
+                                    ) : (
+                                        <Text style={styles.addButtonText}>Add</Text>
+                                    )}
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </View>
+                )
+            }
+        </SafeAreaView >
     );
 }
 
@@ -248,5 +323,63 @@ const styles = StyleSheet.create({
     emptyText: {
         color: "#6c757d",
         fontSize: 14,
+    },
+    modalContainer: {
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        padding: 20,
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 20,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#2c3e50',
+        marginBottom: 8,
+    },
+    modalSubtitle: {
+        fontSize: 14,
+        color: '#6c757d',
+        marginBottom: 16,
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+        borderRadius: 8,
+        padding: 12,
+        fontSize: 16,
+        marginBottom: 20,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+    },
+    modalButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        marginLeft: 10,
+    },
+    cancelButton: {
+        backgroundColor: '#f5f5f5',
+    },
+    addButton: {
+        backgroundColor: '#2e7d32',
+    },
+    cancelButtonText: {
+        color: '#757575',
+        fontWeight: '600',
+    },
+    addButtonText: {
+        color: '#fff',
+        fontWeight: '600',
     },
 });

@@ -11,16 +11,22 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ActivityIndicator,
-  FlatList
+  FlatList,
 } from "react-native";
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
 import api from "../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 const expenseTypes = [
-  'Food', 'Shopping', 'Transport', 'Entertainment',
-  'Bills', 'Travel', 'Health', 'Other'
+  "Food",
+  "Shopping",
+  "Transport",
+  "Entertainment",
+  "Bills",
+  "Travel",
+  "Health",
+  "Other",
 ];
 
 const initialState = {
@@ -42,60 +48,86 @@ const initialState = {
 
 function reducer(state, action) {
   switch (action.type) {
-    case 'SET_FIELD':
+    case "SET_FIELD":
       return { ...state, [action.field]: action.value };
-    case 'SET_LOADING':
+    case "SET_LOADING":
       return { ...state, isLoading: action.payload };
-    case 'SET_SUBMITTING':
+    case "SET_SUBMITTING":
       return { ...state, isSubmitting: action.payload };
-    case 'SET_GROUPS':
+    case "SET_GROUPS":
       return { ...state, groups: action.payload };
-    case 'SET_SELECTED_GROUP':
-      return { ...state, selectedGroup: action.payload, showGroupPicker: false, members: [] };
-    case 'SET_MEMBERS':
-      return { ...state, members: action.payload };
-    case 'SET_CUSTOM_AMOUNTS':
-      return { ...state, customAmounts: action.payload };
-    case 'TOGGLE_MEMBER':
+    case "SET_SELECTED_GROUP":
       return {
         ...state,
-        members: state.members.map(member =>
+        selectedGroup: action.payload,
+        showGroupPicker: false,
+        members: [],
+      };
+    case "SET_MEMBERS":
+      return { ...state, members: action.payload };
+    case "SET_CUSTOM_AMOUNTS":
+      return { ...state, customAmounts: action.payload };
+    case "TOGGLE_MEMBER":
+      return {
+        ...state,
+        members: state.members.map((member) =>
           member.id === action.payload
             ? { ...member, isIncluded: !member.isIncluded }
             : member
         ),
       };
-    case 'LOAD_DATA_SUCCESS':
+    case "LOAD_DATA_SUCCESS":
       return {
         ...state,
         me: action.payload.me,
         groups: action.payload.groups,
         isLoading: false,
       };
-    case 'LOAD_DATA_FAILURE':
+    case "LOAD_DATA_FAILURE":
       return { ...state, isLoading: false };
     default:
       return state;
   }
 }
 
-
-const MemberItem = ({ member, amount, onAmountChange, onToggle, isIncluded }) => (
+const MemberItem = ({
+  member,
+  amount,
+  onAmountChange,
+  onToggle,
+  isIncluded,
+}) => (
   <View style={[styles.memberItem, isIncluded && styles.memberItemSelected]}>
     <View style={styles.memberInfo}>
-      <View style={[styles.avatar, { backgroundColor: isIncluded ? '#2e7d32' : '#e0e0e0' }]}>
-        <Text style={[styles.avatarText, { color: isIncluded ? '#fff' : '#757575' }]}>
-          {member.name ? member.name.charAt(0).toUpperCase() : 'U'}
+      <View
+        style={[
+          styles.avatar,
+          { backgroundColor: isIncluded ? "#2e7d32" : "#e0e0e0" },
+        ]}
+      >
+        <Text
+          style={[
+            styles.avatarText,
+            { color: isIncluded ? "#fff" : "#757575" },
+          ]}
+        >
+          {member.user
+            ? member.user.name.charAt(0).toUpperCase()
+            : member.name
+            ? member.name.charAt(0).toUpperCase()
+            : "U"}
         </Text>
       </View>
-      <Text style={styles.memberName}>{member.name || member.email}</Text>
+      <Text style={styles.memberName}>
+        {member.user ? member.user.name : member.name || member.email}
+      </Text>
     </View>
 
     <View style={styles.amountInputContainer}>
       <Text style={styles.currencySymbol}>₹</Text>
       <TextInput
         style={[styles.amountInput, !isIncluded && styles.amountInputDisabled]}
-        value={amount !== null ? amount.toString() : ''}
+        value={amount !== null ? amount.toString() : ""}
         onChangeText={(text) => onAmountChange(member.id, text)}
         keyboardType="numeric"
         placeholder="0.00"
@@ -103,7 +135,10 @@ const MemberItem = ({ member, amount, onAmountChange, onToggle, isIncluded }) =>
       />
     </View>
 
-    <TouchableOpacity onPress={() => onToggle(member.id)} style={styles.checkboxContainer}>
+    <TouchableOpacity
+      onPress={() => onToggle(member.id)}
+      style={styles.checkboxContainer}
+    >
       <View style={[styles.checkbox, isIncluded && styles.checkboxSelected]}>
         {isIncluded && <Ionicons name="checkmark" size={16} color="#fff" />}
       </View>
@@ -136,63 +171,130 @@ export default function AddExpense({ navigation, route }) {
         const userStr = await AsyncStorage.getItem("user");
         const meParsed = userStr ? JSON.parse(userStr) : null;
 
-        const groupsResponse = await api.get('/groups');
+        const groupsResponse = await api.get("/groups");
         const groupsData = groupsResponse.data || [];
 
-        dispatch({ type: 'LOAD_DATA_SUCCESS', payload: { me: meParsed, groups: groupsData } });
+        dispatch({
+          type: "LOAD_DATA_SUCCESS",
+          payload: { me: meParsed, groups: groupsData },
+        });
 
         if (route.params?.groupId) {
-          const group = groupsData.find(g => g.id === route.params.groupId);
+          const group = groupsData.find((g) => g.id === route.params.groupId);
           if (group) {
-            dispatch({ type: 'SET_SELECTED_GROUP', payload: group });
+            dispatch({ type: "SET_SELECTED_GROUP", payload: group });
             await loadGroupMembers(group.id);
           }
-        }
+        } else if (route.params?.expenseId) {
+          const expenseResponse = await api.get(
+            `/expenses/${route.params.expenseId}`
+          );
+          const expense = expenseResponse.data;
 
+          dispatch({ type: "SET_FIELD", field: "title", value: expense.title });
+          dispatch({
+            type: "SET_FIELD",
+            field: "amount",
+            value: expense.amount.toString(),
+          });
+          dispatch({ type: "SET_FIELD", field: "type", value: expense.type });
+          dispatch({
+            type: "SET_FIELD",
+            field: "date",
+            value: new Date(expense.date),
+          });
+
+          if (expense.groupId) {
+            const group = groupsData.find((g) => g.id === expense.groupId);
+            if (group) {
+              dispatch({ type: "SET_SELECTED_GROUP", payload: group });
+
+              const membersResponse = await api.get(
+                `/groups/${group.id}/members`
+              );
+              const membersData = membersResponse.data || [];
+
+              const updatedMembers = membersData.map((m) => ({
+                ...m,
+                isIncluded: expense.splits.some(
+                  (s) => s.groupMemberId === m.id || s.userId === m.userId
+                ),
+              }));
+
+              dispatch({ type: "SET_MEMBERS", payload: updatedMembers });
+
+              const amounts = {};
+              expense.splits.forEach((s) => {
+                if (s.groupMemberId) {
+                  amounts[s.groupMemberId] = s.shareAmount.toString();
+                } else if (s.userId) {
+                  const member = membersData.find((m) => m.userId === s.userId);
+                  if (member) amounts[member.id] = s.shareAmount.toString();
+                }
+              });
+              membersData.forEach((m) => {
+                if (!amounts[m.id]) amounts[m.id] = "";
+              });
+
+              dispatch({ type: "SET_CUSTOM_AMOUNTS", payload: amounts });
+
+              if (expense.splits.length > 0) {
+                const firstAmount = expense.splits[0].shareAmount;
+                const isEqual = expense.splits.every(
+                  (s) => Math.abs(s.shareAmount - firstAmount) < 0.1
+                );
+                dispatch({
+                  type: "SET_FIELD",
+                  field: "splitType",
+                  value: isEqual ? "equal" : "custom",
+                });
+              }
+            }
+          }
+        }
       } catch (error) {
-        console.error('Error loading data:', error);
-        Alert.alert('Error', 'Failed to load data');
-        dispatch({ type: 'LOAD_DATA_FAILURE' });
+        console.error("Error loading data:", error);
+        Alert.alert("Error", "Failed to load data");
+        dispatch({ type: "LOAD_DATA_FAILURE" });
       }
     };
 
     loadData();
-  }, [route.params?.groupId]);
+  }, [route.params?.groupId, route.params?.expenseId]);
 
   const loadGroupMembers = async (groupId) => {
     try {
       const response = await api.get(`/groups/${groupId}/members`);
       const membersData = response.data || [];
-      dispatch({ type: 'SET_MEMBERS', payload: membersData });
+      dispatch({ type: "SET_MEMBERS", payload: membersData });
 
       const amounts = {};
-      membersData.forEach(member => {
-        amounts[member.id] = '';
+      membersData.forEach((member) => {
+        amounts[member.id] = "";
       });
-      dispatch({ type: 'SET_CUSTOM_AMOUNTS', payload: amounts });
-
+      dispatch({ type: "SET_CUSTOM_AMOUNTS", payload: amounts });
     } catch (error) {
-      console.error('Error loading group members:', error);
+      console.error("Error loading group members:", error);
       throw error;
     }
   };
 
   const handleGroupSelect = async (group) => {
-    dispatch({ type: 'SET_SELECTED_GROUP', payload: group });
+    dispatch({ type: "SET_SELECTED_GROUP", payload: group });
     await loadGroupMembers(group.id);
   };
 
   const toggleMember = (memberId) => {
-    dispatch({ type: 'TOGGLE_MEMBER', payload: memberId });
+    dispatch({ type: "TOGGLE_MEMBER", payload: memberId });
   };
 
   const handleAmountChange = (memberId, value) => {
-    const cleanedValue = value.replace(/[^0-9.]/g, '');
+    const cleanedValue = value.replace(/[^0-9.]/g, "");
 
-    if (cleanedValue === '') {
+    if (cleanedValue === "") {
       dispatch({
-        type: 'SET_CUSTOM_AMOUNTS',
-        payload: { ...customAmounts, [memberId]: '' },
+        type: "SET_CUSTOM_AMOUNTS",
+        payload: { ...customAmounts, [memberId]: "" },
       });
       return;
     }
@@ -200,7 +302,7 @@ export default function AddExpense({ navigation, route }) {
     const numValue = parseFloat(cleanedValue);
     if (!isNaN(numValue) && numValue >= 0) {
       dispatch({
-        type: 'SET_CUSTOM_AMOUNTS',
+        type: "SET_CUSTOM_AMOUNTS",
         payload: { ...customAmounts, [memberId]: cleanedValue },
       });
     }
@@ -210,7 +312,7 @@ export default function AddExpense({ navigation, route }) {
     if (!amount || isNaN(parseFloat(amount)) || members.length === 0) return 0;
 
     const totalAmount = parseFloat(amount);
-    const includedMembers = members.filter(m => m.isIncluded);
+    const includedMembers = members.filter((m) => m.isIncluded);
 
     if (includedMembers.length === 0) return 0;
 
@@ -222,13 +324,13 @@ export default function AddExpense({ navigation, route }) {
     if (!amount || isNaN(parseFloat(amount))) return false;
 
     const totalAmount = parseFloat(amount);
-    const includedMembers = members.filter(m => m.isIncluded);
+    const includedMembers = members.filter((m) => m.isIncluded);
 
     if (includedMembers.length === 0) return false;
 
     let sum = 0;
     for (const member of includedMembers) {
-      const amount = parseFloat(customAmounts[member.id] || '0');
+      const amount = parseFloat(customAmounts[member.id] || "0");
       if (isNaN(amount) || amount < 0) return false;
       sum += amount;
     }
@@ -238,83 +340,93 @@ export default function AddExpense({ navigation, route }) {
 
   const submit = async () => {
     if (!me) {
-      Alert.alert('Error', 'User not authenticated');
+      Alert.alert("Error", "User not authenticated");
       return;
     }
 
     if (!title.trim()) {
-      Alert.alert('Error', 'Please enter a title');
+      Alert.alert("Error", "Please enter a title");
       return;
     }
 
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-      Alert.alert('Error', 'Please enter a valid amount');
+      Alert.alert("Error", "Please enter a valid amount");
       return;
     }
 
-    if (selectedGroup && members.filter(m => m.isIncluded).length === 0) {
-      Alert.alert('Error', 'Please include at least one member');
+    if (selectedGroup && members.filter((m) => m.isIncluded).length === 0) {
+      Alert.alert("Error", "Please include at least one member");
       return;
     }
 
-    if (splitType === 'custom' && !validateCustomSplit()) {
-      Alert.alert('Error', 'The sum of individual amounts must equal the total amount');
+    if (splitType === "custom" && !validateCustomSplit()) {
+      Alert.alert(
+        "Error",
+        "The sum of individual amounts must equal the total amount"
+      );
       return;
     }
 
-    dispatch({ type: 'SET_SUBMITTING', payload: true });
+    dispatch({ type: "SET_SUBMITTING", payload: true });
 
     try {
       const expenseData = {
         title: title.trim(),
         amount: parseFloat(amount),
         type,
-        date: date.toISOString().split('T')[0],
+        date: date.toISOString().split("T")[0],
         paid_by: me.id,
         group_id: selectedGroup?.id || null,
         split_type: splitType,
-        splits: []
+        splits: [],
       };
 
       if (selectedGroup) {
-        const includedMembers = members.filter(m => m.isIncluded);
+        const includedMembers = members.filter((m) => m.isIncluded);
 
-        if (splitType === 'equal') {
+        if (splitType === "equal") {
           const share = parseFloat(amount) / (includedMembers.length || 1);
 
-          expenseData.splits = includedMembers.map(member => ({
-            user_id: member.id,
+          expenseData.splits = includedMembers.map((member) => ({
+            user_id: member.userId || null,
+            group_member_id: member.id,
             amount: parseFloat(share.toFixed(2)),
           }));
         } else {
-          expenseData.splits = includedMembers.map(member => ({
-            user_id: member.id,
-            amount: parseFloat(customAmounts[member.id] || '0'),
+          expenseData.splits = includedMembers.map((member) => ({
+            user_id: member.userId || null,
+            group_member_id: member.id,
+            amount: parseFloat(customAmounts[member.id] || "0"),
           }));
         }
       } else {
-        // Personal expense: split with self (100%)
-        expenseData.splits = [{
-          user_id: me.id,
-          amount: parseFloat(amount)
-        }];
+        expenseData.splits = [
+          {
+            user_id: me.id,
+            amount: parseFloat(amount),
+          },
+        ];
       }
 
-      await api.post('/expenses', expenseData);
-
-      navigation.navigate('MainTabs', {
-        screen: 'Expenses',
-        params: { refresh: true }
-      });
-
+      if (route.params?.expenseId) {
+        await api.put(`/expenses/${route.params.expenseId}`, expenseData);
+        navigation.goBack();
+      } else {
+        await api.post("/expenses", expenseData);
+        navigation.navigate("MainTabs", {
+          screen: "Expenses",
+          params: { refresh: true },
+        });
+      }
     } catch (error) {
-      console.error('Error creating expense:', error);
+      console.error("Error creating expense:", error);
       Alert.alert(
-        'Error',
-        error.response?.data?.message || 'Failed to create expense. Please try again.'
+        "Error",
+        error.response?.data?.message ||
+          "Failed to create expense. Please try again."
       );
     } finally {
-      dispatch({ type: 'SET_SUBMITTING', payload: false });
+      dispatch({ type: "SET_SUBMITTING", payload: false });
     }
   };
 
@@ -335,7 +447,9 @@ export default function AddExpense({ navigation, route }) {
         >
           <Ionicons name="arrow-back" size={24} color="#2c3e50" />
         </TouchableOpacity>
-        <Text style={styles.title}>Add Expense</Text>
+        <Text style={styles.title}>
+          {route.params?.expenseId ? "Edit Expense" : "Add Expense"}
+        </Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -344,16 +458,22 @@ export default function AddExpense({ navigation, route }) {
           <Text style={styles.label}>Group (optional)</Text>
           <TouchableOpacity
             style={styles.groupSelector}
-            onPress={() => dispatch({ type: 'SET_FIELD', field: 'showGroupPicker', value: true })}
+            onPress={() =>
+              dispatch({
+                type: "SET_FIELD",
+                field: "showGroupPicker",
+                value: true,
+              })
+            }
           >
             <Text
               style={[
                 styles.groupSelectorText,
                 !selectedGroup && styles.groupSelectorPlaceholder,
-                selectedGroup && styles.groupSelectorSelected
+                selectedGroup && styles.groupSelectorSelected,
               ]}
             >
-              {selectedGroup ? selectedGroup.name : 'Select a group'}
+              {selectedGroup ? selectedGroup.name : "Select a group"}
             </Text>
             <Ionicons
               name="chevron-down"
@@ -368,7 +488,9 @@ export default function AddExpense({ navigation, route }) {
           <TextInput
             placeholder="e.g., Dinner, Groceries, Movie tickets"
             value={title}
-            onChangeText={(value) => dispatch({ type: 'SET_FIELD', field: 'title', value })}
+            onChangeText={(value) =>
+              dispatch({ type: "SET_FIELD", field: "title", value })
+            }
             style={styles.input}
             autoCapitalize="words"
           />
@@ -381,7 +503,13 @@ export default function AddExpense({ navigation, route }) {
             <TextInput
               placeholder="0.00"
               value={amount}
-              onChangeText={(text) => dispatch({ type: 'SET_FIELD', field: 'amount', value: text.replace(/[^0-9.]/g, '') })}
+              onChangeText={(text) =>
+                dispatch({
+                  type: "SET_FIELD",
+                  field: "amount",
+                  value: text.replace(/[^0-9.]/g, ""),
+                })
+              }
               keyboardType="numeric"
               style={styles.amountInput}
               returnKeyType="next"
@@ -397,14 +525,20 @@ export default function AddExpense({ navigation, route }) {
                 key={expenseType}
                 style={[
                   styles.typeButton,
-                  type === expenseType && styles.typeButtonSelected
+                  type === expenseType && styles.typeButtonSelected,
                 ]}
-                onPress={() => dispatch({ type: 'SET_FIELD', field: 'type', value: expenseType })}
+                onPress={() =>
+                  dispatch({
+                    type: "SET_FIELD",
+                    field: "type",
+                    value: expenseType,
+                  })
+                }
               >
                 <Text
                   style={[
                     styles.typeButtonText,
-                    type === expenseType && styles.typeButtonTextSelected
+                    type === expenseType && styles.typeButtonTextSelected,
                   ]}
                 >
                   {expenseType}
@@ -417,14 +551,22 @@ export default function AddExpense({ navigation, route }) {
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Date</Text>
           <TouchableOpacity
-            style={[styles.input, { justifyContent: 'center' }]}
-            onPress={() => dispatch({ type: 'SET_FIELD', field: 'showDatePicker', value: true })}
+            style={[styles.input, { justifyContent: "center" }]}
+            onPress={() =>
+              dispatch({
+                type: "SET_FIELD",
+                field: "showDatePicker",
+                value: true,
+              })
+            }
           >
-            <Text>{date.toLocaleDateString('en-IN', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric'
-            })}</Text>
+            <Text>
+              {date.toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </Text>
           </TouchableOpacity>
 
           {showDatePicker && (
@@ -433,9 +575,17 @@ export default function AddExpense({ navigation, route }) {
               mode="date"
               display="default"
               onChange={(event, selectedDate) => {
-                dispatch({ type: 'SET_FIELD', field: 'showDatePicker', value: false });
+                dispatch({
+                  type: "SET_FIELD",
+                  field: "showDatePicker",
+                  value: false,
+                });
                 if (selectedDate) {
-                  dispatch({ type: 'SET_FIELD', field: 'date', value: selectedDate });
+                  dispatch({
+                    type: "SET_FIELD",
+                    field: "date",
+                    value: selectedDate,
+                  });
                 }
               }}
             />
@@ -449,14 +599,23 @@ export default function AddExpense({ navigation, route }) {
               <TouchableOpacity
                 style={[
                   styles.splitTypeButton,
-                  splitType === 'equal' && styles.splitTypeButtonSelected
+                  splitType === "equal" && styles.splitTypeButtonSelected,
                 ]}
-                onPress={() => dispatch({ type: 'SET_FIELD', field: 'splitType', value: 'equal' })}
+                onPress={() =>
+                  dispatch({
+                    type: "SET_FIELD",
+                    field: "splitType",
+                    value: "equal",
+                  })
+                }
               >
                 <Text
                   style={[
                     styles.splitTypeText,
-                    splitType === 'equal' && { color: '#2e7d32', fontWeight: '600' }
+                    splitType === "equal" && {
+                      color: "#2e7d32",
+                      fontWeight: "600",
+                    },
                   ]}
                 >
                   Equal
@@ -465,14 +624,23 @@ export default function AddExpense({ navigation, route }) {
               <TouchableOpacity
                 style={[
                   styles.splitTypeButton,
-                  splitType === 'custom' && styles.splitTypeButtonSelected
+                  splitType === "custom" && styles.splitTypeButtonSelected,
                 ]}
-                onPress={() => dispatch({ type: 'SET_FIELD', field: 'splitType', value: 'custom' })}
+                onPress={() =>
+                  dispatch({
+                    type: "SET_FIELD",
+                    field: "splitType",
+                    value: "custom",
+                  })
+                }
               >
                 <Text
                   style={[
                     styles.splitTypeText,
-                    splitType === 'custom' && { color: '#2e7d32', fontWeight: '600' }
+                    splitType === "custom" && {
+                      color: "#2e7d32",
+                      fontWeight: "600",
+                    },
                   ]}
                 >
                   Custom
@@ -485,18 +653,20 @@ export default function AddExpense({ navigation, route }) {
         {selectedGroup && members.length > 0 && (
           <View style={styles.inputContainer}>
             <Text style={styles.sectionTitle}>
-              {splitType === 'equal'
+              {splitType === "equal"
                 ? `Each person pays ₹${calculateEqualSplit()}`
-                : 'Enter amounts for each person'}
+                : "Enter amounts for each person"}
             </Text>
 
             {members.map((member) => (
               <MemberItem
                 key={member.id}
                 member={member}
-                amount={splitType === 'equal'
-                  ? calculateEqualSplit()
-                  : customAmounts[member.id] || ''}
+                amount={
+                  splitType === "equal"
+                    ? calculateEqualSplit()
+                    : customAmounts[member.id] || ""
+                }
                 onAmountChange={handleAmountChange}
                 onToggle={toggleMember}
                 isIncluded={member.isIncluded}
@@ -514,7 +684,11 @@ export default function AddExpense({ navigation, route }) {
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.saveButtonText}>
-              {selectedGroup ? 'Add Expense to Group' : 'Add Expense'}
+              {route.params?.expenseId
+                ? "Update Expense"
+                : selectedGroup
+                ? "Add Expense to Group"
+                : "Add Expense"}
             </Text>
           )}
         </TouchableOpacity>
@@ -524,13 +698,27 @@ export default function AddExpense({ navigation, route }) {
         visible={showGroupPicker}
         transparent
         animationType="slide"
-        onRequestClose={() => dispatch({ type: 'SET_FIELD', field: 'showGroupPicker', value: false })}
+        onRequestClose={() =>
+          dispatch({
+            type: "SET_FIELD",
+            field: "showGroupPicker",
+            value: false,
+          })
+        }
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Group</Text>
-              <TouchableOpacity onPress={() => dispatch({ type: 'SET_FIELD', field: 'showGroupPicker', value: false })}>
+              <TouchableOpacity
+                onPress={() =>
+                  dispatch({
+                    type: "SET_FIELD",
+                    field: "showGroupPicker",
+                    value: false,
+                  })
+                }
+              >
                 <Ionicons name="close" size={24} color="#6c757d" />
               </TouchableOpacity>
             </View>
@@ -542,7 +730,7 @@ export default function AddExpense({ navigation, route }) {
                 <TouchableOpacity
                   style={[
                     styles.groupItem,
-                    selectedGroup?.id === item.id && styles.groupItemSelected
+                    selectedGroup?.id === item.id && styles.groupItemSelected,
                   ]}
                   onPress={() => handleGroupSelect(item)}
                 >
@@ -554,7 +742,7 @@ export default function AddExpense({ navigation, route }) {
               )}
               ListEmptyComponent={
                 <View style={styles.loadingContainer}>
-                  <Text style={{ color: '#6c757d' }}>No groups found</Text>
+                  <Text style={{ color: "#6c757d" }}>No groups found</Text>
                 </View>
               }
             />

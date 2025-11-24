@@ -37,17 +37,10 @@ const MemberItem = ({ user, selected, onToggle }) => (
 
 const initialState = {
   groups: [],
-  contacts: [],
-  searchText: "",
-  page: 1,
-  hasMore: true,
-  loadingContacts: false,
-  showAddContact: false,
-  newContactEmail: "",
-  addingContact: false,
   showModal: false,
   name: "",
-  selectedMembers: [],
+  membersList: [],
+  newMemberName: "",
   loading: true,
   refreshing: false,
   isCreating: false,
@@ -59,28 +52,24 @@ function reducer(state, action) {
       return { ...state, [action.field]: action.value };
     case 'SET_GROUPS':
       return { ...state, groups: action.payload };
-    case 'SET_CONTACTS':
-      return { ...state, contacts: action.payload };
-    case 'APPEND_CONTACTS':
-      return { ...state, contacts: [...state.contacts, ...action.payload] };
-    case 'TOGGLE_MEMBER':
+    case 'ADD_MEMBER':
       return {
         ...state,
-        selectedMembers: state.selectedMembers.includes(action.payload)
-          ? state.selectedMembers.filter(id => id !== action.payload)
-          : [...state.selectedMembers, action.payload]
+        membersList: [...state.membersList, { name: action.payload }],
+        newMemberName: ""
+      };
+    case 'REMOVE_MEMBER':
+      return {
+        ...state,
+        membersList: state.membersList.filter((_, index) => index !== action.payload)
       };
     case 'RESET_MODAL':
       return {
         ...state,
         name: "",
-        selectedMembers: [],
+        membersList: [],
+        newMemberName: "",
         showModal: false,
-        searchText: "",
-        page: 1,
-        hasMore: true,
-        showAddContact: false,
-        newContactEmail: ""
       };
     default:
       return state;
@@ -92,17 +81,10 @@ export default function Groups({ navigation }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const {
     groups,
-    contacts,
-    searchText,
-    page,
-    hasMore,
-    loadingContacts,
-    showAddContact,
-    newContactEmail,
-    addingContact,
     showModal,
     name,
-    selectedMembers,
+    membersList,
+    newMemberName,
     loading,
     refreshing,
     isCreating
@@ -139,79 +121,18 @@ export default function Groups({ navigation }) {
     return unsubscribe;
   }, [navigation]);
 
-  const loadContacts = async (reset = false) => {
-    if (loadingContacts) return;
-    if (!reset && !hasMore) return;
-
-    dispatch({ type: 'SET_FIELD', field: 'loadingContacts', value: true });
-    try {
-      const currentPage = reset ? 1 : page;
-      const res = await api.get("/contacts", {
-        params: {
-          search: searchText,
-          page: currentPage,
-          limit: 20
-        }
-      });
-
-      const newContacts = res.data.data || [];
-      const pagination = res.data.pagination;
-
-      if (reset) {
-        dispatch({ type: 'SET_CONTACTS', payload: newContacts });
-      } else {
-        dispatch({ type: 'APPEND_CONTACTS', payload: newContacts });
-      }
-
-      dispatch({ type: 'SET_FIELD', field: 'hasMore', value: newContacts.length === (pagination?.limit || 20) });
-      dispatch({ type: 'SET_FIELD', field: 'page', value: currentPage + 1 });
-    } catch (error) {
-      console.error('Error loading contacts:', error);
-      if (reset) dispatch({ type: 'SET_CONTACTS', payload: [] });
-    } finally {
-      dispatch({ type: 'SET_FIELD', field: 'loadingContacts', value: false });
-    }
-  };
-
-  useEffect(() => {
-    if (showModal) {
-      loadContacts(true);
-    }
-  }, [showModal]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (showModal) {
-        dispatch({ type: 'SET_FIELD', field: 'page', value: 1 });
-        dispatch({ type: 'SET_FIELD', field: 'hasMore', value: true });
-        loadContacts(true);
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [searchText, showModal]);
-
   const onRefresh = () => {
     dispatch({ type: 'SET_FIELD', field: 'refreshing', value: true });
     loadGroups();
   };
 
-  const handleAddContact = async () => {
-    if (!newContactEmail.trim()) return;
-    dispatch({ type: 'SET_FIELD', field: 'addingContact', value: true });
-    try {
-      await api.post("/contacts", { email: newContactEmail.trim() });
-      dispatch({ type: 'SET_FIELD', field: 'newContactEmail', value: "" });
-      dispatch({ type: 'SET_FIELD', field: 'showAddContact', value: false });
-      Alert.alert("Success", "Contact added successfully");
+  const handleAddMember = () => {
+    if (!newMemberName.trim()) return;
+    dispatch({ type: 'ADD_MEMBER', payload: newMemberName.trim() });
+  };
 
-      dispatch({ type: 'SET_FIELD', field: 'page', value: 1 });
-      dispatch({ type: 'SET_FIELD', field: 'hasMore', value: true });
-      loadContacts(true);
-    } catch (error) {
-      Alert.alert("Error", error.response?.data?.error || "Failed to add contact");
-    } finally {
-      dispatch({ type: 'SET_FIELD', field: 'addingContact', value: false });
-    }
+  const handleRemoveMember = (index) => {
+    dispatch({ type: 'REMOVE_MEMBER', payload: index });
   };
 
   const handleCreateGroup = async () => {
@@ -220,16 +141,14 @@ export default function Groups({ navigation }) {
       return;
     }
 
-    if (selectedMembers.length === 0) {
-      Alert.alert('Error', 'Please select at least one member');
-      return;
+    if (membersList.length === 0) {
     }
 
     dispatch({ type: 'SET_FIELD', field: 'isCreating', value: true });
     try {
       const groupData = {
         name: name.trim(),
-        members: [...selectedMembers, user.id].map(id => Number(id))
+        members: membersList
       };
 
       const response = await api.post("/groups", groupData);
@@ -277,7 +196,7 @@ export default function Groups({ navigation }) {
         {item.members && item.members.length > 0 && (
           <View style={{ marginTop: 8 }}>
             <Text style={{ color: '#6c757d', fontSize: 14 }} numberOfLines={1}>
-              {item.members.map(m => m.user?.name || m.user?.email).join(', ')}
+              {item.members.map(m => m.user ? m.user.name : m.name).join(', ')}
             </Text>
           </View>
         )}
@@ -363,66 +282,48 @@ export default function Groups({ navigation }) {
                 returnKeyType="next"
               />
 
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <Text style={styles.sectionTitle}>Add Members</Text>
-                <TouchableOpacity onPress={() => dispatch({ type: 'SET_FIELD', field: 'showAddContact', value: !showAddContact })}>
-                  <Text style={{ color: '#2e7d32', fontWeight: '600' }}>
-                    {showAddContact ? 'Cancel' : '+ Add Contact'}
-                  </Text>
+              <Text style={styles.sectionTitle}>Add Members</Text>
+              <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+                <TextInput
+                  placeholder="Member Name"
+                  value={newMemberName}
+                  onChangeText={(text) => dispatch({ type: 'SET_FIELD', field: 'newMemberName', value: text })}
+                  style={[styles.input, { flex: 1, marginBottom: 0, marginRight: 8 }]}
+                  onSubmitEditing={handleAddMember}
+                  blurOnSubmit={false}
+                  returnKeyType="done"
+                />
+                <TouchableOpacity
+                  style={[styles.addButton, { paddingHorizontal: 16 }]}
+                  onPress={handleAddMember}
+                >
+                  <Ionicons name="add" size={24} color="#fff" />
                 </TouchableOpacity>
               </View>
 
-              {showAddContact && (
-                <View style={{ flexDirection: 'row', marginBottom: 16 }}>
-                  <TextInput
-                    placeholder="Enter email address"
-                    value={newContactEmail}
-                    onChangeText={(text) => dispatch({ type: 'SET_FIELD', field: 'newContactEmail', value: text })}
-                    style={[styles.input, { flex: 1, marginBottom: 0, marginRight: 8 }]}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                  />
-                  <TouchableOpacity
-                    style={[styles.addButton, { paddingHorizontal: 16 }]}
-                    onPress={handleAddContact}
-                    disabled={addingContact}
-                  >
-                    {addingContact ? (
-                      <ActivityIndicator color="#fff" size="small" />
-                    ) : (
-                      <Ionicons name="add" size={24} color="#fff" />
-                    )}
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              <TextInput
-                placeholder="Search contacts..."
-                value={searchText}
-                onChangeText={(text) => dispatch({ type: 'SET_FIELD', field: 'searchText', value: text })}
-                style={[styles.input, { marginBottom: 8 }]}
-              />
-
-              <View style={{ height: 250, marginBottom: 24 }}>
+              <View style={{ height: 200, marginBottom: 24 }}>
                 <FlatList
-                  data={contacts}
-                  keyExtractor={(item) => item.id.toString()}
-                  renderItem={({ item }) => (
-                    <MemberItem
-                      user={item}
-                      selected={selectedMembers.includes(item.id)}
-                      onToggle={toggleMember}
-                    />
+                  data={membersList}
+                  keyExtractor={(item, index) => index.toString()}
+                  renderItem={({ item, index }) => (
+                    <View style={styles.memberItem}>
+                      <View style={styles.memberInfo}>
+                        <View style={[styles.avatar, { backgroundColor: '#e0e0e0' }]}>
+                          <Text style={[styles.avatarText, { color: '#757575' }]}>
+                            {item.name.charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                        <Text style={styles.memberName}>{item.name}</Text>
+                      </View>
+                      <TouchableOpacity onPress={() => handleRemoveMember(index)}>
+                        <Ionicons name="close-circle" size={24} color="#e53935" />
+                      </TouchableOpacity>
+                    </View>
                   )}
-                  onEndReached={() => loadContacts()}
-                  onEndReachedThreshold={0.5}
-                  ListFooterComponent={loadingContacts && <ActivityIndicator size="small" color="#2e7d32" />}
                   ListEmptyComponent={
-                    !loadingContacts && (
-                      <Text style={{ textAlign: 'center', color: '#6c757d', marginTop: 16 }}>
-                        {searchText ? 'No contacts found' : 'No contacts yet. Add someone!'}
-                      </Text>
-                    )
+                    <Text style={{ textAlign: 'center', color: '#6c757d', marginTop: 16 }}>
+                      No members added yet
+                    </Text>
                   }
                 />
               </View>
@@ -438,7 +339,7 @@ export default function Groups({ navigation }) {
                 <TouchableOpacity
                   onPress={handleCreateGroup}
                   style={[styles.createButton, { flex: 1 }]}
-                  disabled={!name.trim() || selectedMembers.length === 0 || isCreating}
+                  disabled={!name.trim() || isCreating}
                 >
                   {isCreating ? (
                     <ActivityIndicator color="#fff" />

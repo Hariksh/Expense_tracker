@@ -21,8 +21,11 @@ export default function ExpenseDetail({ navigation, route }) {
     const [deleting, setDeleting] = useState(false);
 
     useEffect(() => {
-        loadExpense();
-    }, []);
+        const unsubscribe = navigation.addListener('focus', () => {
+            loadExpense();
+        });
+        return unsubscribe;
+    }, [navigation]);
 
     const loadExpense = async () => {
         try {
@@ -142,11 +145,11 @@ export default function ExpenseDetail({ navigation, route }) {
                         <View key={split.id} style={styles.userRow}>
                             <View style={[styles.avatar, { backgroundColor: '#e0e0e0' }]}>
                                 <Text style={[styles.avatarText, { color: '#757575' }]}>
-                                    {split.userId === user.id ? "Y" : "U"}
+                                    {split.user ? split.user.name.charAt(0).toUpperCase() : (split.groupMember?.name ? split.groupMember.name.charAt(0).toUpperCase() : 'U')}
                                 </Text>
                             </View>
                             <Text style={styles.userName}>
-                                {split.userId === user.id ? "You" : `User ${split.userId}`}
+                                {split.userId === user.id ? "You" : (split.user ? split.user.name : (split.groupMember?.name || `User ${split.userId || ''}`))}
                             </Text>
                             <Text style={styles.userAmount}>
                                 ₹{parseFloat(split.shareAmount).toFixed(2)}
