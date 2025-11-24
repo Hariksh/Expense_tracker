@@ -17,22 +17,9 @@ model User {
   expenses      Expense[]      @relation("UserExpenses")
   groups        GroupMember[]
   splits        ExpenseSplit[]
-  contacts      Contact[]      @relation("UserContacts")
-  addedBy       Contact[]      @relation("ContactAddedBy")
   createdGroups Group[]        @relation("CreatedGroups")
 }
 
-model Contact {
-  id            Int      @id @default(autoincrement())
-  ownerId       Int
-  contactUserId Int
-  createdAt     DateTime @default(now())
-
-  owner         User     @relation("UserContacts", fields: [ownerId], references: [id])
-  contactUser   User     @relation("ContactAddedBy", fields: [contactUserId], references: [id])
-
-  @@unique([ownerId, contactUserId])
-}
 
 model Group {
   id        Int      @id @default(autoincrement())
