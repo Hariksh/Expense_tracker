@@ -137,4 +137,54 @@ router.get("/:id/members", auth, async (req, res) => {
   res.json(group.members);
 });
 
+router.delete("/:id", auth, async (req, res) => {
+  const groupId = parseInt(req.params.id);
+  const group = await prisma.group.findUnique({ where: { id: groupId } });
+
+  if (!group) return res.status(404).json({ error: "Group not found" });
+  if (group.createdBy !== req.user.id) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+
+  try {
+    await prisma.$transaction(async (prisma) => {
+      // Find all expenses in the group
+      const expenses = await prisma.expense.findMany({
+        where: { groupId },
+        select: { id: true }
+      });
+      const expenseIds = expenses.map(e => e.id);
+
+      // Delete all expense splits for these expenses
+      if (expenseIds.length > 0) {
+        await prisma.expenseSplit.deleteMany({
+          where: {
+            expenseId: { in: expenseIds }
+          }
+        });
+      }
+
+      // Delete all expenses in the group
+      await prisma.expense.deleteMany({
+        where: { groupId }
+      });
+
+      // Delete all group members
+      await prisma.groupMember.deleteMany({
+        where: { groupId }
+      });
+
+      // Delete the group itself
+      await prisma.group.delete({
+        where: { id: groupId }
+      });
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting group:", error);
+    res.status(500).json({ error: "Failed to delete group" });
+  }
+});
+
 module.exports = router;

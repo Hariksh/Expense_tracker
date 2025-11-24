@@ -15,7 +15,7 @@ router.get("/", auth, async (req, res) => {
         { splits: { some: { userId } } },
       ],
     },
-    include: { splits: true },
+    include: { splits: { include: { user: true, groupMember: true } } },
     orderBy: { createdAt: "desc" },
   });
   res.json(items);
